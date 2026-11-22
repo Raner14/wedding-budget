@@ -26,5 +26,10 @@ dist-ssr
 # Personal photo originals — never committed
 design-preview/images/
 
-# Optimized personal photos — kept out of Git until publication is explicitly approved
-public/images/
+# Optimized couple photos (public/images/couple-*.jpg) ARE tracked — publication approved.
+# Guard: never commit full-resolution or other source formats into public/images.
+public/images/*.png
+public/images/*.heic
+public/images/*.tif
+public/images/*.tiff
+public/images/*.raw

@@ -4,7 +4,8 @@ import Reveal from './Reveal.jsx'
 import { Blossom, Heart, Rings, Sprig } from './Botanicals.jsx'
 import './Hero.css'
 
-const PHOTO_SRCSET = '/images/couple-640.jpg 640w, /images/couple-1280.jpg 1280w, /images/couple-1672.jpg 1672w'
+const HERO_WIDTHS = [640, 960, 1280, 1672]
+const srcSet = (ext) => HERO_WIDTHS.map((w) => `/images/couple-${w}.${ext} ${w}w`).join(', ')
 /*
  * The frame crops with object-fit: cover by HEIGHT, so the rendered image width is
  * frame height × 16:9 → mobile 300px → ~533px, tablet 400px → ~711px, desktop 580px → ~1030px.
@@ -48,9 +49,10 @@ export default function Hero() {
               <div className="photo-fallback" aria-hidden="true"><Rings className="photo-fallback-icon" />התמונה שלנו</div>
             ) : (
               <picture>
+                <source type="image/webp" srcSet={srcSet('webp')} sizes={PHOTO_SIZES} />
                 <img
                   src="/images/couple-1280.jpg"
-                  srcSet={PHOTO_SRCSET}
+                  srcSet={srcSet('jpg')}
                   sizes={PHOTO_SIZES}
                   width="1672"
                   height="941"

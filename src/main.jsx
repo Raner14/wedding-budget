@@ -6,6 +6,9 @@ import './styles/base.css'
 import './styles/components.css'
 import App from './App.jsx'
 import { canAnimateEntrances } from './components/motion.js'
+import { loadFonts } from './fonts.js'
+
+loadFonts()
 
 // Entrance animations hide content until it scrolls into view — only enable
 // them when the browser supports them and the user has not asked for reduced motion.

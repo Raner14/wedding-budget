@@ -52,14 +52,18 @@ approved, self-contained visual prototypes. They are references only and are not
 
 ## Personal photo
 
-The couple photo is intentionally **not tracked in Git**:
+- `design-preview/images/couple.png` — the original, full-resolution photo. **Never committed**
+  (ignored in `.gitignore`).
+- `public/images/couple-640.jpg`, `couple-1280.jpg`, `couple-1672.jpg` — optimized copies used by
+  the app, **tracked and published** (publication approved). Re-encoded from the original, so they
+  carry no EXIF/GPS/XMP metadata. Source formats (PNG/HEIC/TIFF/RAW) in `public/images/` are ignored
+  as a safeguard.
 
-- `design-preview/images/` — the original photo (never committed)
-- `public/images/` — optimized copies used by the app (`couple-640.jpg`, `couple-1280.jpg`,
-  `couple-1672.jpg`), kept out of Git until publication is explicitly approved
-
-Without these files the app shows a decorative placeholder instead of the photo.
+If the photos are missing, the app shows a decorative placeholder instead.
 
 ## Deployment
 
 `vercel.json` rewrites every path to `index.html` so direct URLs such as `/tasks` work.
+
+`vercel.json` also sets security headers (CSP, `X-Frame-Options`, `nosniff`, referrer and
+permissions policies) and long-term caching for the hashed files in `/assets`.
