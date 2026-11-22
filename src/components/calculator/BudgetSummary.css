@@ -5,8 +5,6 @@
 .summary-head { position: relative; display: flex; align-items: center; justify-content: space-between; gap: 8px; margin-bottom: 18px; }
 .live-dot { display: inline-flex; align-items: center; gap: 7px; font-size: 12px; color: var(--muted); }
 .live-dot::before { content: ""; width: 7px; height: 7px; border-radius: 50%; background: var(--sage-500); box-shadow: 0 0 0 3px var(--sage-100); }
-.alert-first { margin-top: 0; margin-bottom: 16px; }
-.link-btn { padding: 0; margin-top: 4px; border: 0; background: none; font-weight: 600; color: inherit; text-decoration: underline; text-underline-offset: 3px; cursor: pointer; }
 
 /* Balance */
 .balance {

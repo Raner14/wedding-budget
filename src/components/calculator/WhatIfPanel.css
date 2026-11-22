@@ -1,0 +1,52 @@
+/* What-if panel — ported from the approved prototype. */
+.whatif { margin-top: 16px; overflow: hidden; }
+.whatif > .sprig { width: 110px; bottom: -24px; inset-inline-start: -26px; transform: rotate(-20deg); opacity: .55; }
+.sliders { position: relative; display: grid; gap: 12px; }
+.slider-field { padding: 16px; border-radius: 22px; background: var(--cream); border: 1px solid var(--line); transition: border-color .2s; }
+.slider-field:hover { border-color: var(--gold-300); }
+.slider-top { display: flex; align-items: center; justify-content: space-between; gap: 8px; }
+.slider-top label { display: flex; align-items: center; gap: 8px; font-size: 14px; font-weight: 500; }
+.slider-top label svg { width: 18px; height: 18px; color: var(--gold-500); }
+.slider-top output {
+  min-width: 56px; padding: 3px 10px; border-radius: 999px; background: #fff; border: 1px solid var(--line);
+  text-align: center; font-size: 15px; font-weight: 700; color: var(--ink); font-variant-numeric: tabular-nums; unicode-bidi: isolate;
+}
+.slider-field input[type="range"] {
+  -webkit-appearance: none; appearance: none; width: 100%; height: 32px; margin: 10px 0 2px;
+  background: transparent; cursor: pointer;
+}
+.slider-field input[type="range"]:focus-visible { outline: none; }
+.slider-field input[type="range"]::-webkit-slider-runnable-track { height: 8px; border-radius: 999px; background: var(--fill); }
+.slider-field input[type="range"]::-webkit-slider-thumb {
+  -webkit-appearance: none; width: 26px; height: 26px; margin-top: -9px; border-radius: 50%;
+  background: radial-gradient(circle, #fff 0 38%, var(--gold-500) 40% 100%);
+  border: 3px solid #fff; box-shadow: 0 2px 8px rgb(120 80 60 / .35); transition: transform .2s var(--ease);
+}
+.slider-field input[type="range"]::-moz-range-track { height: 8px; border-radius: 999px; background: var(--fill); }
+.slider-field input[type="range"]::-moz-range-thumb {
+  width: 20px; height: 20px; border-radius: 50%;
+  background: radial-gradient(circle, #fff 0 38%, var(--gold-500) 40% 100%);
+  border: 3px solid #fff; box-shadow: 0 2px 8px rgb(120 80 60 / .35);
+}
+.slider-field input[type="range"]:hover:not(:disabled)::-webkit-slider-thumb { transform: scale(1.1); }
+.slider-field input[type="range"]:focus-visible::-webkit-slider-thumb { box-shadow: 0 0 0 6px rgb(92 122 99 / .3), 0 2px 8px rgb(120 80 60 / .35); }
+.slider-field input[type="range"]:focus-visible::-moz-range-thumb { box-shadow: 0 0 0 6px rgb(92 122 99 / .3); }
+.slider-field input[type="range"]:disabled { cursor: not-allowed; }
+.slider-scale { display: flex; justify-content: space-between; font-size: 12px; color: var(--muted); font-variant-numeric: tabular-nums; }
+.slider-hint { min-height: 1.4em; margin: 10px 0 0; font-size: 13px; color: var(--ink-soft); }
+
+.whatif-results { position: relative; display: grid; gap: 10px; margin-top: 16px; }
+.w-tile { padding: 16px 18px; border-radius: 22px; background: var(--tone-soft); border: 1px solid var(--tone-line); transition: background-color .4s, border-color .4s; }
+.w-label { margin: 0; font-size: 13px; font-weight: 500; color: var(--muted); }
+.w-value { display: flex; flex-wrap: wrap; align-items: center; gap: 6px; margin-top: 4px; font-size: 20px; font-weight: 700; color: var(--tone-ink); font-variant-numeric: tabular-nums; }
+.w-value svg { width: 18px; height: 18px; }
+.whatif.is-disabled .sliders, .whatif.is-disabled .whatif-results { opacity: .5; }
+
+@media (min-width: 640px) {
+  .whatif { margin-top: 24px; }
+  .whatif-results { grid-template-columns: 1fr 1fr auto; align-items: center; }
+}
+@media (min-width: 1024px) {
+  .whatif { margin-top: 28px; }
+  .sliders { grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 16px; }
+}

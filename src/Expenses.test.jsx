@@ -8,6 +8,14 @@ const normalize = (s) => s.replace(/[\u200e\u200f]/g, '').replace(/\u00a0/g, ' '
 const list = () => screen.getByRole('list', { name: 'הוצאות נוספות' })
 const rowNames = () => within(list()).getAllByRole('textbox', { name: 'שם ההוצאה' }).map((i) => i.value)
 const subtotal = () => normalize(screen.getByText('סה״כ הוצאות נוספות').nextElementSibling.textContent)
+/** The undo toast (sliders' <output> elements also have the implicit "status" role). */
+const queryToast = () => document.querySelector('.toast')
+const getToast = () => {
+  const el = queryToast()
+  if (!el) throw new Error('undo toast not found')
+  expect(el.getAttribute('role')).toBe('status')
+  return el
+}
 const venueAmount = () => normalize(document.querySelector('.venue-row .venue-amount').textContent)
 
 describe('Expense management', () => {
@@ -99,7 +107,7 @@ describe('Expense management', () => {
 
     expect(rowNames()).toEqual(['די-ג׳יי', 'שמלת כלה'])
     expect(document.activeElement).toBe(screen.getByRole('button', { name: 'מחיקת ההוצאה שמלת כלה' }))
-    const toast = screen.getByRole('status')
+    const toast = getToast()
     expect(toast.textContent).toContain('ההוצאה „צלם” נמחקה')
     expect(subtotal()).toContain('0')
 
@@ -107,7 +115,7 @@ describe('Expense management', () => {
     expect(rowNames()).toEqual(['די-ג׳יי', 'צלם', 'שמלת כלה'])
     expect(screen.getByRole('textbox', { name: 'סכום עבור צלם (₪)' }).value).toBe('9,000')
     expect(document.activeElement).toBe(within(list()).getAllByRole('textbox', { name: 'שם ההוצאה' })[1])
-    expect(screen.queryByRole('status')).toBeNull()
+    expect(queryToast()).toBeNull()
     expect(subtotal()).toContain('9,000')
   })
 
@@ -133,7 +141,7 @@ describe('Expense management', () => {
     render(<App />)
     await user.click(screen.getByRole('button', { name: 'מחיקת ההוצאה די-ג׳יי' }))
     await user.click(screen.getByRole('button', { name: 'מחיקת ההוצאה צלם' }))
-    expect(screen.getAllByRole('status')).toHaveLength(1)
+    expect(document.querySelectorAll('.toast')).toHaveLength(1)
     await user.click(screen.getByRole('button', { name: 'ביטול' }))
     expect(rowNames()).toEqual(['צלם', 'שמלת כלה'])
   })
@@ -143,7 +151,7 @@ describe('Expense management', () => {
     render(<App />)
     await user.click(screen.getByRole('button', { name: 'מחיקת ההוצאה צלם' }))
     await user.click(screen.getByRole('button', { name: 'סגירת ההודעה' }))
-    expect(screen.queryByRole('status')).toBeNull()
+    expect(queryToast()).toBeNull()
     expect(rowNames()).toEqual(['די-ג׳יי', 'שמלת כלה'])
   })
 
@@ -154,9 +162,9 @@ describe('Expense management', () => {
       render(<App />)
       await user.click(screen.getByRole('button', { name: 'מחיקת ההוצאה צלם' }))
       act(() => vi.advanceTimersByTime(5900))
-      expect(screen.getByRole('status')).toBeTruthy()
+      expect(getToast()).toBeTruthy()
       act(() => vi.advanceTimersByTime(200))
-      expect(screen.queryByRole('status')).toBeNull()
+      expect(queryToast()).toBeNull()
     } finally {
       vi.useRealTimers()
     }

@@ -9,6 +9,7 @@ import EventDetailsForm from './components/calculator/EventDetailsForm.jsx'
 import ExpensesList from './components/calculator/ExpensesList.jsx'
 import BudgetSummary from './components/calculator/BudgetSummary.jsx'
 import MobileBalanceBar from './components/calculator/MobileBalanceBar.jsx'
+import WhatIfPanel from './components/calculator/WhatIfPanel.jsx'
 import { actions, budgetReducer } from './lib/budgetState.js'
 import { loadBudget, saveBudget } from './lib/budgetStorage.js'
 import { parseBudget, parseWhole } from './lib/validation.js'
@@ -79,7 +80,8 @@ function App() {
             <p className="section-sub">ממלאים כמה פרטים, והמאזן מתעדכן מיד. אפשר לשנות כל דבר בכל רגע.</p>
           </Reveal>
 
-          <main className="layout">
+          <main>
+            <div className="layout">
             <div className="col-inputs">
               <EventDetailsForm
                 event={event}
@@ -99,6 +101,11 @@ function App() {
               />
             </div>
             <BudgetSummary parsed={parsed} lastValidValues={state.lastValidValues} />
+            </div>
+            <WhatIfPanel
+              values={parsed.errorCount === 0 && !parsed.isEmpty ? parsed.values : null}
+              disabledReason={parsed.errorCount > 0 ? 'יש לתקן את השדות המסומנים כדי לבחון תרחישים.' : 'הזינו פרטי אירוע כדי לבחון תרחישים.'}
+            />
           </main>
         </div>
 

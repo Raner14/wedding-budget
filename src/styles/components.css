@@ -108,6 +108,8 @@
 .alert-warn { background: #FFF6E2; border-color: #EED9A8; color: #5C4000; }
 .alert-info { background: var(--champagne-100); border-color: #EBDDBF; color: var(--ink-soft); }
 .alert-info svg { color: var(--gold-700); }
+.alert-first { margin-top: 0; margin-bottom: 16px; }
+.link-btn { padding: 0; margin-top: 4px; border: 0; background: none; font-weight: 600; color: inherit; text-decoration: underline; text-underline-offset: 3px; cursor: pointer; }
 
 @media (min-width: 640px) {
   .card { padding: 28px; }
