@@ -1,0 +1,112 @@
+/* Wedding task planner — implements design-preview/tasks.html with the shared design tokens. */
+.tasks-page { max-width: 760px; margin-inline: auto; padding-top: 8px; display: grid; gap: 16px; }
+
+/* ---------- Header ---------- */
+.tasks-hero {
+  position: relative; overflow: hidden;
+  display: grid; grid-template-columns: minmax(0, 1fr) auto; align-items: center; gap: 16px;
+  padding: 22px 20px; border-radius: 28px;
+  background: linear-gradient(140deg, #FFFDF8, #FBF1EC); border: 1px solid var(--line); box-shadow: var(--shadow-soft);
+}
+.tasks-hero-copy { position: relative; z-index: 1; min-width: 0; }
+.tasks-eyebrow {
+  display: inline-flex; align-items: center; gap: 8px; margin: 0; padding: 5px 12px; border-radius: 999px;
+  background: var(--blush-50); border: 1px solid var(--blush-100); font-size: 13px; font-weight: 600; color: var(--rose-600);
+}
+.tasks-eyebrow svg { width: 13px; height: 13px; }
+.tasks-hero h1 { margin: 12px 0 0; font-family: var(--font-serif); font-weight: 500; font-size: 36px; line-height: 1.1; }
+.tasks-hero h1 span { color: var(--rose-600); }
+.tasks-hero-sub { margin: 10px 0 0; font-size: 15px; line-height: 1.6; color: var(--ink-soft); }
+.mini-arch { width: 96px; padding: 5px; border: 1px solid var(--gold-300); border-radius: 999px 999px 18px 18px; }
+.mini-arch > div { aspect-ratio: 4 / 5; overflow: hidden; border-radius: 999px 999px 13px 13px; background: linear-gradient(160deg, var(--blush-100), var(--champagne-100)); }
+.mini-arch img { display: block; width: 100%; height: 100%; object-fit: cover; object-position: 66% 30%; }
+.tasks-hero-sprig { width: 90px; inset-inline-start: -20px; bottom: -26px; opacity: .6; transform: rotate(160deg); }
+
+/* ---------- Progress ---------- */
+.progress-card { display: grid; gap: 14px; }
+.progress-top { display: flex; flex-wrap: wrap; align-items: flex-end; justify-content: space-between; gap: 8px 12px; }
+.progress-percent { font-family: var(--font-serif); font-size: 44px; line-height: 1; color: var(--rose-600); font-variant-numeric: tabular-nums; }
+.progress-label { margin: 0; font-size: 14px; color: var(--ink-soft); }
+.progress-track { height: 12px; border-radius: 999px; background: rgb(210 193 172 / .3); overflow: hidden; }
+.progress-fill { height: 100%; border-radius: 999px; background: linear-gradient(to left, var(--gold-300), var(--rose-500)); transition: width .7s var(--ease); }
+.progress-chips { display: flex; flex-wrap: wrap; gap: 8px; margin: 0; padding: 0; list-style: none; }
+.progress-chips li { display: inline-flex; align-items: center; gap: 6px; padding: 4px 12px; border-radius: 999px; font-size: 13px; background: var(--cream); color: var(--ink-soft); border: 1px solid var(--line); }
+.progress-chips li svg { width: 13px; height: 13px; }
+.progress-chips .chip-done { background: var(--sage-100); color: var(--sage-700); border-color: #D5E1D2; }
+.celebrate { display: flex; align-items: center; gap: 10px; margin: 0; padding: 12px 16px; border-radius: 18px; background: var(--sage-100); color: var(--sage-700); font-weight: 500; }
+.celebrate-blossom { width: 26px; height: 26px; }
+
+/* ---------- Composer ---------- */
+.composer { display: grid; gap: 8px; }
+.composer > label { font-size: 14px; font-weight: 500; }
+.composer-row { display: flex; flex-wrap: wrap; gap: 10px; }
+.composer-input { flex: 1 1 240px; }
+.composer-btn { flex: 1 1 100%; min-height: 52px; }
+
+/* ---------- List ---------- */
+.list-head { display: flex; align-items: center; justify-content: space-between; gap: 10px; margin-bottom: 14px; }
+.list-head h2 { margin: 0; font-family: var(--font-serif); font-weight: 500; font-size: 24px; }
+.task-list { list-style: none; margin: 0; padding: 0; display: grid; gap: 10px; }
+.task {
+  position: relative; display: grid; grid-template-columns: 44px minmax(0, 1fr) auto; align-items: center; gap: 6px;
+  min-height: 60px; padding: 8px 8px 8px 10px; border-radius: 18px; border: 1px solid var(--line); background: #FFFEFC;
+  transition: background-color .3s, border-color .3s, box-shadow .25s var(--ease);
+}
+.task:hover { border-color: var(--gold-300); box-shadow: 0 10px 24px -18px rgb(120 80 60 / .4); }
+.task.is-done { background: #F3F7F1; border-color: #DCE6D8; }
+
+.task-check { position: relative; display: grid; place-items: center; width: 44px; height: 44px; cursor: pointer; }
+.task-check input { position: absolute; inset: 0; width: 100%; height: 100%; margin: 0; opacity: 0; cursor: pointer; }
+.task-box {
+  display: grid; place-items: center; width: 28px; height: 28px; border-radius: 50%;
+  border: 2px solid var(--input-border); background: #fff; transition: background-color .25s, border-color .25s, transform .25s var(--ease);
+}
+.task-box svg { width: 16px; height: 16px; fill: none; stroke: #fff; stroke-width: 3; stroke-linecap: round; stroke-linejoin: round; stroke-dasharray: 24; stroke-dashoffset: 24; transition: stroke-dashoffset .35s .05s var(--ease); }
+.task-check input:checked + .task-box { background: linear-gradient(135deg, var(--sage-500), var(--sage-700)); border-color: var(--sage-700); }
+.task-check input:checked + .task-box svg { stroke-dashoffset: 0; }
+.task-check input:focus-visible + .task-box { box-shadow: 0 0 0 4px rgb(92 122 99 / .3); }
+.task-check:hover .task-box { border-color: var(--sage-600); }
+
+.task-title { font-size: 16px; line-height: 1.45; overflow-wrap: anywhere; transition: color .3s; }
+.is-done .task-title { color: var(--muted); text-decoration: line-through; text-decoration-color: var(--sage-500); text-decoration-thickness: 2px; }
+.task-actions { display: flex; gap: 2px; }
+.task-actions .icon-btn { width: 44px; height: 44px; }
+.task-actions .icon-btn:not(.danger):hover, .task-actions .icon-btn:not(.danger):focus-visible { background: var(--blush-50); color: var(--rose-600); }
+
+.task-edit { grid-column: 2 / -1; display: grid; grid-template-columns: minmax(0, 1fr) auto; align-items: center; gap: 6px; }
+.task-edit-input { min-height: 44px; }
+.task-edit-input input { padding: 8px 12px; font-size: 16px; }
+.task-error { grid-column: 1 / -1; margin-top: 0; }
+
+.task-bloom { position: absolute; top: 0; inset-inline-start: 14px; width: 22px; height: 22px; opacity: 0; pointer-events: none; }
+
+/* ---------- Empty state ---------- */
+.tasks-empty { padding: 28px 12px; text-align: center; border: 1.5px dashed var(--line-strong); border-radius: 22px; background: rgb(255 255 255 / .5); }
+.tasks-empty-art { width: 88px; height: 88px; margin: 0 auto 12px; display: grid; place-items: center; border-radius: 50%; background: radial-gradient(circle, var(--champagne-100), var(--blush-50)); color: var(--gold-700); }
+.tasks-empty-art svg { width: 40px; height: 40px; }
+.tasks-empty h3 { margin: 0; font-family: var(--font-serif); font-weight: 500; font-size: 22px; }
+.tasks-empty p { margin: 6px 0 0; color: var(--muted); }
+
+/* ---------- Motion ---------- */
+@media (prefers-reduced-motion: no-preference) {
+  .task.just-done .task-box { animation: check-pop .45s var(--ease); }
+  .task.just-done .task-bloom { animation: bloom .8s var(--ease); }
+  @keyframes check-pop { 40% { transform: scale(1.18); } }
+  @keyframes bloom {
+    0% { opacity: 0; transform: scale(.4) rotate(-20deg); }
+    40% { opacity: 1; transform: scale(1.1) translateY(-6px); }
+    100% { opacity: 0; transform: scale(.9) translateY(-14px) rotate(20deg); }
+  }
+}
+@media (prefers-reduced-motion: reduce) {
+  .task-box, .task-box svg, .progress-fill { transition: none; }
+}
+
+/* ---------- Responsive ---------- */
+@media (min-width: 640px) {
+  .tasks-page { padding-top: 24px; gap: 20px; }
+  .tasks-hero { padding: 32px 36px; gap: 24px; }
+  .tasks-hero h1 { font-size: 52px; }
+  .mini-arch { width: 150px; }
+  .composer-btn { flex: 0 0 auto; }
+}

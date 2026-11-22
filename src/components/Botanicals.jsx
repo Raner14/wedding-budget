@@ -42,9 +42,9 @@ export function SvgDefs() {
   )
 }
 
-function UseSymbol({ id, viewBox, className, style }) {
+function UseSymbol({ id, viewBox, ...rest }) {
   return (
-    <svg className={className} style={style} viewBox={viewBox} aria-hidden="true" focusable="false">
+    <svg {...rest} viewBox={viewBox} aria-hidden="true" focusable="false">
       <use href={`#${id}`} />
     </svg>
   )

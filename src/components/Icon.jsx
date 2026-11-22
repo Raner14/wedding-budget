@@ -18,6 +18,7 @@ const PATHS = {
   clock: <><circle cx="12" cy="12" r="8.5" /><path d="M12 7.5V12l3 2" /></>,
   refresh: <><path d="M20 12a8 8 0 1 1-2.3-5.6" /><path d="M20 4v5h-5" /></>,
   trash: <path d="M4 7h16M10 11v6M14 11v6M6 7l1 12a2 2 0 0 0 2 2h6a2 2 0 0 0 2-2l1-12M9 7V4h6v3" />,
+  edit: <><path d="M4 20h4L19.5 8.5a2.1 2.1 0 0 0-3-3L5 17v3z" /><path d="M14.5 7.5l3 3" /></>,
   users: <><circle cx="9" cy="8" r="3.5" /><path d="M2.5 20a6.5 6.5 0 0 1 13 0" /><path d="M16 4.5a3.5 3.5 0 0 1 0 7M18 14a6.5 6.5 0 0 1 3.5 6" /></>,
   dish: <><path d="M4 11h16a8 8 0 0 1-16 0z" /><path d="M12 7V4M9 7.5 8 5.5M15 7.5l1-2" /><path d="M2.5 19.5h19" /></>,
   gift: <><rect x="3.5" y="9" width="17" height="11.5" rx="2" /><path d="M3.5 13h17M12 9v11.5" /><path d="M12 9c-2-3.5-6-4-6-1.5S10 9 12 9zm0 0c2-3.5 6-4 6-1.5S14 9 12 9z" /></>,
