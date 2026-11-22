@@ -1,0 +1,21 @@
+/* Mobile sticky balance bar — ported from the approved prototype. */
+.mobile-bar {
+  width: 100%; display: flex; align-items: center; gap: 12px; padding: 10px 12px 10px 16px;
+  border-radius: 24px; text-decoration: none; color: var(--ink);
+  background: rgb(255 253 250 / .94); -webkit-backdrop-filter: blur(10px); backdrop-filter: blur(10px);
+  border: 1px solid var(--line); box-shadow: 0 -4px 30px -6px rgb(120 80 60 / .28);
+}
+.mb-status { flex: 1; min-width: 0; display: flex; align-items: center; gap: 10px; }
+.mb-icon { display: grid; place-items: center; width: 38px; height: 38px; border-radius: 50%; background: var(--tone-soft); border: 1px solid var(--tone-line); color: var(--tone); }
+.mb-icon svg { width: 18px; height: 18px; }
+.mb-text { display: grid; min-width: 0; }
+.mb-label { display: flex; align-items: center; gap: 6px; font-size: 12px; font-weight: 600; color: var(--tone-ink); }
+.mb-label .badge { padding: 0 7px; font-size: 11px; }
+.mb-amount { font-size: 19px; font-weight: 700; color: var(--tone-ink); font-variant-numeric: tabular-nums; }
+.mb-hint { font-size: 15px; font-weight: 500; }
+.mb-cta { display: flex; align-items: center; gap: 4px; padding: 8px 14px; border-radius: 999px; background: var(--champagne-100); font-size: 13px; font-weight: 600; color: var(--gold-700); white-space: nowrap; }
+.mb-cta svg { width: 15px; height: 15px; }
+
+@media (min-width: 1024px) {
+  .mobile-bar { display: none; }
+}

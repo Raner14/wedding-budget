@@ -7,6 +7,8 @@ import Dock from './components/Dock.jsx'
 import UndoToast from './components/UndoToast.jsx'
 import EventDetailsForm from './components/calculator/EventDetailsForm.jsx'
 import ExpensesList from './components/calculator/ExpensesList.jsx'
+import BudgetSummary from './components/calculator/BudgetSummary.jsx'
+import MobileBalanceBar from './components/calculator/MobileBalanceBar.jsx'
 import { actions, budgetReducer } from './lib/budgetState.js'
 import { loadBudget, saveBudget } from './lib/budgetStorage.js'
 import { parseBudget, parseWhole } from './lib/validation.js'
@@ -96,6 +98,7 @@ function App() {
                 onRemove={handleRemoveExpense}
               />
             </div>
+            <BudgetSummary parsed={parsed} lastValidValues={state.lastValidValues} />
           </main>
         </div>
 
@@ -108,6 +111,7 @@ function App() {
               onClose={() => setPendingUndo(null)}
             />
           )}
+          <MobileBalanceBar parsed={parsed} lastValidValues={state.lastValidValues} />
         </Dock>
       </div>
     </>

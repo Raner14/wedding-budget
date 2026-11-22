@@ -8,7 +8,7 @@ const normalize = (s) => s.replace(/[\u200e\u200f]/g, '').replace(/\u00a0/g, ' '
 const list = () => screen.getByRole('list', { name: 'הוצאות נוספות' })
 const rowNames = () => within(list()).getAllByRole('textbox', { name: 'שם ההוצאה' }).map((i) => i.value)
 const subtotal = () => normalize(screen.getByText('סה״כ הוצאות נוספות').nextElementSibling.textContent)
-const venueAmount = () => normalize(screen.getByText('אולם ומנות').closest('.venue-row').querySelector('.venue-amount').textContent)
+const venueAmount = () => normalize(document.querySelector('.venue-row .venue-amount').textContent)
 
 describe('Expense management', () => {
   it('starts with DJ, photographer and wedding dress, plus the automatic venue row', () => {
