@@ -1,0 +1,19 @@
+/* Calculator page layout — section intro and two-column grid (from the approved prototype). */
+.section-intro { margin: 44px auto 22px; max-width: 640px; text-align: center; scroll-margin-top: 16px; }
+.kicker { margin: 12px 0 0; font-size: 13px; font-weight: 600; letter-spacing: .08em; color: var(--gold-700); }
+.section-title { margin: 6px 0 0; font-family: var(--font-serif); font-weight: 500; font-size: 30px; line-height: 1.2; }
+.section-sub { margin: 10px 0 0; font-size: 15px; line-height: 1.6; color: var(--muted); }
+
+.layout { display: grid; gap: 16px; }
+.col-inputs { display: grid; gap: 16px; min-width: 0; }
+
+@media (min-width: 640px) {
+  .section-intro { margin-top: 64px; margin-bottom: 28px; }
+  .section-title { font-size: 38px; }
+  .layout, .col-inputs { gap: 24px; }
+}
+@media (min-width: 1024px) {
+  .section-intro { margin-top: 88px; margin-bottom: 36px; }
+  .section-title { font-size: 44px; }
+  .layout { grid-template-columns: minmax(0, 7fr) minmax(0, 5fr); align-items: start; gap: 28px; }
+}
