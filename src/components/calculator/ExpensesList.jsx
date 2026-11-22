@@ -1,4 +1,4 @@
-import { useRef, useState } from 'react'
+import { useEffect, useRef, useState } from 'react'
 import { flushSync } from 'react-dom'
 import Icon from '../Icon.jsx'
 import Reveal from '../Reveal.jsx'
@@ -31,6 +31,10 @@ export default function ExpensesList({ expenses, errors, venueCost, expensesTota
   const listRef = useRef(null)
   const addRef = useRef(null)
   const [leavingId, setLeavingId] = useState(null)
+  const leaveTimer = useRef(null)
+
+  // Never run a pending removal after the list is gone (e.g. navigating away mid-animation).
+  useEffect(() => () => clearTimeout(leaveTimer.current), [])
   const canAdd = expenses.length < MAX_EXPENSES
 
   function handleAdd() {
@@ -52,7 +56,7 @@ export default function ExpensesList({ expenses, errors, venueCost, expensesTota
   function handleDelete(expense, index) {
     if (prefersReducedMotion()) return removeNow(expense, index)
     setLeavingId(expense.id)
-    setTimeout(() => removeNow(expense, index), LEAVE_ANIMATION_MS)
+    leaveTimer.current = setTimeout(() => removeNow(expense, index), LEAVE_ANIMATION_MS)
   }
 
   return (
@@ -132,7 +136,8 @@ export default function ExpensesList({ expenses, errors, venueCost, expensesTota
                   className="icon-btn danger exp-del"
                   data-role="delete"
                   aria-label={`מחיקת ההוצאה ${label}`}
-                  disabled={expense.id === leavingId}
+                  // One removal at a time: keeps undo positions exact during the short leave animation.
+                  disabled={leavingId !== null}
                   onClick={() => handleDelete(expense, index)}
                 >
                   <Icon name="trash" />

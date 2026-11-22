@@ -1,5 +1,5 @@
 import { describe, expect, it, vi } from 'vitest'
-import { screen } from '@testing-library/react'
+import { fireEvent, screen } from '@testing-library/react'
 import userEvent from '@testing-library/user-event'
 import { renderApp } from './test/renderApp.jsx'
 import { BUDGET_STORAGE_KEY } from './lib/budgetStorage.js'
@@ -29,6 +29,20 @@ describe('Start over', () => {
     renderApp()
     await user.click(screen.getByRole('button', { name: 'התחל מחדש' }))
     expect(screen.getByLabelText('כמה אורחים מזמינים?').value).toBe('300')
+  })
+})
+
+describe('Start over — scenario reset (regression)', () => {
+  it('also resets the what-if sliders, so an old scenario does not reappear', async () => {
+    const user = userEvent.setup()
+    vi.spyOn(window, 'confirm').mockReturnValue(true)
+    seedBudget(SAMPLES.profit)
+    renderApp()
+    fireEvent.change(screen.getByLabelText('המנה מתייקרת?'), { target: { value: '20' } })
+    expect(screen.getByLabelText('המנה מתייקרת?').value).toBe('20')
+    await user.click(screen.getByRole('button', { name: 'התחל מחדש' }))
+    await user.type(screen.getByLabelText('כמה אורחים מזמינים?'), '100')
+    expect(screen.getByLabelText('המנה מתייקרת?').value).toBe('0')
   })
 })
 

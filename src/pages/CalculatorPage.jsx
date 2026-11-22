@@ -33,6 +33,8 @@ export default function CalculatorPage() {
   const [pendingUndo, setPendingUndo] = useState(null)
   const [highlightId, setHighlightId] = useState(null)
   const [canSave] = useState(isStorageAvailable)
+  /** Bumped by "start over" so temporary UI state (scenario sliders) resets too. */
+  const [resetCount, setResetCount] = useState(0)
 
   // Persist the raw input on every change. Failures are tolerated (private mode, quota).
   useEffect(() => {
@@ -74,6 +76,7 @@ export default function CalculatorPage() {
     if (!window.confirm('למחוק את כל הנתונים ולהתחיל מחדש?')) return
     flushSync(() => {
       dispatch(actions.reset())
+      setResetCount((n) => n + 1)
       setPendingUndo(null)
       setHighlightId(null)
     })
@@ -115,6 +118,7 @@ export default function CalculatorPage() {
             <BudgetSummary parsed={parsed} lastValidValues={lastValidValues} />
           </div>
           <WhatIfPanel
+            key={resetCount}
             values={scenarioValues}
             disabledReason={parsed.errorCount > 0 ? 'יש לתקן את השדות המסומנים כדי לבחון תרחישים.' : 'הזינו פרטי אירוע כדי לבחון תרחישים.'}
           />

@@ -1,5 +1,5 @@
 import { describe, expect, it, vi } from 'vitest'
-import { act, screen, within } from '@testing-library/react'
+import { act, fireEvent, screen, within } from '@testing-library/react'
 import userEvent from '@testing-library/user-event'
 import { renderApp } from './test/renderApp.jsx'
 import { BUDGET_STORAGE_KEY } from './lib/budgetStorage.js'
@@ -168,6 +168,43 @@ describe('Expense management', () => {
     } finally {
       vi.useRealTimers()
     }
+  })
+
+  describe('with motion enabled (leave animation)', () => {
+    const enableMotion = () => { window.matchMedia = vi.fn().mockReturnValue({ matches: false }) }
+    const disableMotion = () => { delete window.matchMedia }
+
+    it('blocks other deletions during the short animation, then removes exactly one row', () => {
+      vi.useFakeTimers()
+      enableMotion()
+      try {
+        renderApp()
+        fireEvent.click(screen.getByRole('button', { name: 'מחיקת ההוצאה די-ג׳יי' }))
+        expect(screen.getByRole('button', { name: 'מחיקת ההוצאה צלם' }).disabled).toBe(true)
+        act(() => vi.advanceTimersByTime(250))
+        expect(rowNames()).toEqual(['צלם', 'שמלת כלה'])
+        expect(screen.getByRole('button', { name: 'מחיקת ההוצאה צלם' }).disabled).toBe(false)
+      } finally {
+        disableMotion()
+        vi.useRealTimers()
+      }
+    })
+
+    it('does not run a pending removal after the page is gone', () => {
+      vi.useFakeTimers()
+      enableMotion()
+      try {
+        const view = renderApp()
+        fireEvent.click(screen.getByRole('button', { name: 'מחיקת ההוצאה צלם' }))
+        view.unmount()
+        expect(() => act(() => vi.advanceTimersByTime(500))).not.toThrow()
+        const saved = JSON.parse(localStorage.getItem(BUDGET_STORAGE_KEY)).expenses.map((e) => e.name)
+        expect(saved).toContain('צלם')
+      } finally {
+        disableMotion()
+        vi.useRealTimers()
+      }
+    })
   })
 
   it('persists expense changes, including deletions and additions', async () => {
