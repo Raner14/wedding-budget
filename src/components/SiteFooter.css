@@ -1,0 +1,7 @@
+/* Site footer — ported from the approved prototype. */
+.site-footer { position: relative; display: grid; justify-items: center; gap: 12px; margin-top: 48px; padding: 8px 8px 12px; text-align: center; font-size: 13px; color: var(--muted); }
+.site-footer p { margin: 0; max-width: 62ch; line-height: 1.6; }
+.footer-rings { color: var(--gold-500); }
+.footer-sign { display: inline-flex; align-items: center; gap: 8px; font-family: var(--font-serif); font-size: 18px; color: var(--ink-soft); }
+.footer-sign svg { width: 16px; height: 16px; color: var(--rose-500); }
+.storage-warning { max-width: 440px; margin-inline: auto; text-align: start; }

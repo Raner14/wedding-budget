@@ -34,6 +34,10 @@
   --muted: #776A60;
   --line: #EEE3D5;
   --line-strong: #D2C1AC;
+  /* Form control boundaries need ≥3:1 against the field background (WCAG 1.4.11). */
+  --input-border: #A3907A;
+  --input-border-hover: #A8854A;
+  --placeholder: #807162;
 
   /* Typography */
   --font-sans: 'Heebo', system-ui, 'Segoe UI', Arial, sans-serif;

@@ -28,7 +28,7 @@
 .exp-row .input-wrap { min-height: 46px; }
 .exp-row .input-wrap input { font-size: 16px; padding: 10px 14px; }
 .exp-name .input-wrap { border-color: transparent; background: transparent; }
-.exp-name .input-wrap:hover { border-color: var(--line-strong); background: #fff; }
+.exp-name .input-wrap:hover { border-color: var(--input-border); background: #fff; }
 .exp-name .input-wrap:focus-within { border-color: var(--sage-600); background: #fff; }
 .exp-name .input-wrap.is-invalid { border-color: #C2414F; background: #FFFAFA; }
 .exp-name input { font-weight: 500; }

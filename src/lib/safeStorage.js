@@ -17,6 +17,21 @@ export function readJSON(key) {
 }
 
 /**
+ * Whether localStorage can actually be written (it may exist but throw, e.g. in some private modes).
+ * @returns {boolean}
+ */
+export function isStorageAvailable() {
+  const probe = '__wedding_budget_probe__'
+  try {
+    globalThis.localStorage.setItem(probe, '1')
+    globalThis.localStorage.removeItem(probe)
+    return true
+  } catch {
+    return false
+  }
+}
+
+/**
  * @param {string} key
  * @param {unknown} value
  * @returns {boolean} Whether the value was saved.
