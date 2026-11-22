@@ -1,0 +1,59 @@
+/* Expenses card — ported from the approved prototype. */
+.venue-row {
+  display: flex; flex-wrap: wrap; align-items: center; gap: 10px 14px; padding: 14px 16px; border-radius: 20px;
+  background: linear-gradient(to left, var(--champagne-100), var(--cream)); border: 1px solid #EBDDBF;
+}
+.venue-row .exp-icon { background: #fff; color: var(--gold-700); }
+.venue-meta { flex: 1; min-width: 0; display: flex; flex-wrap: wrap; align-items: center; gap: 4px 10px; }
+.venue-name { font-weight: 600; }
+.venue-amount { font-weight: 700; font-size: 17px; font-variant-numeric: tabular-nums; }
+
+.exp-list { list-style: none; margin: 12px 0 0; padding: 0; display: grid; gap: 10px; }
+.exp-row {
+  display: grid; gap: 10px; align-items: center;
+  grid-template-columns: 40px minmax(0, 1fr) 44px;
+  grid-template-areas: "icon name del" "amount amount amount";
+  padding: 12px; border: 1px solid var(--line); border-radius: 20px; background: #FFFEFC;
+  transition: border-color .2s, box-shadow .25s var(--ease), opacity .22s, transform .22s var(--ease);
+}
+.exp-row:hover { border-color: var(--gold-300); box-shadow: 0 10px 24px -18px rgb(120 80 60 / .4); }
+.exp-icon {
+  grid-area: icon; display: grid; place-items: center; width: 40px; height: 40px; border-radius: 14px;
+  background: var(--blush-50); color: var(--rose-600); border: 1px solid var(--blush-100);
+}
+.exp-icon svg { width: 20px; height: 20px; }
+.exp-name { grid-area: name; min-width: 0; }
+.exp-amount { grid-area: amount; min-width: 0; }
+.exp-del { grid-area: del; }
+.exp-row .input-wrap { min-height: 46px; }
+.exp-row .input-wrap input { font-size: 16px; padding: 10px 14px; }
+.exp-name .input-wrap { border-color: transparent; background: transparent; }
+.exp-name .input-wrap:hover { border-color: var(--line-strong); background: #fff; }
+.exp-name .input-wrap:focus-within { border-color: var(--sage-600); background: #fff; }
+.exp-name .input-wrap.is-invalid { border-color: #C2414F; background: #FFFAFA; }
+.exp-name input { font-weight: 500; }
+.exp-row.is-leaving { opacity: 0; transform: scale(.97); }
+@media (prefers-reduced-motion: no-preference) {
+  .exp-row.is-new { animation: row-in .45s var(--ease); }
+  @keyframes row-in { from { opacity: 0; transform: translateY(-6px); background: var(--blush-50); } }
+}
+
+.exp-empty {
+  margin-top: 12px; padding: 22px 16px; text-align: center;
+  border: 1.5px dashed var(--line-strong); border-radius: 20px;
+  font-size: 14px; color: var(--muted); background: rgb(255 255 255 / .5);
+}
+.exp-empty strong { display: block; margin-bottom: 2px; font-family: var(--font-serif); font-size: 17px; font-weight: 500; color: var(--ink-soft); }
+.exp-actions { margin-top: 12px; }
+.exp-footer { display: flex; align-items: baseline; justify-content: space-between; gap: 12px; margin-top: 16px; padding-top: 16px; border-top: 1px solid var(--line); }
+.subtotal-label { font-size: 14px; color: var(--muted); }
+.subtotal-value { font-size: 18px; font-weight: 700; font-variant-numeric: tabular-nums; }
+
+@media (min-width: 640px) {
+  .exp-row {
+    grid-template-columns: 40px minmax(0, 1fr) 200px 44px;
+    grid-template-areas: "icon name amount del";
+    padding: 8px;
+  }
+  .exp-row .exp-icon { margin-inline-start: 4px; }
+}

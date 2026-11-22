@@ -1,13 +1,19 @@
-import { useEffect, useReducer } from 'react'
+import { useEffect, useReducer, useState } from 'react'
+import { flushSync } from 'react-dom'
 import { Blossom, SvgDefs } from './components/Botanicals.jsx'
 import Hero from './components/Hero.jsx'
 import Reveal from './components/Reveal.jsx'
+import Dock from './components/Dock.jsx'
+import UndoToast from './components/UndoToast.jsx'
 import EventDetailsForm from './components/calculator/EventDetailsForm.jsx'
+import ExpensesList from './components/calculator/ExpensesList.jsx'
 import { actions, budgetReducer } from './lib/budgetState.js'
 import { loadBudget, saveBudget } from './lib/budgetStorage.js'
 import { parseBudget, parseWhole } from './lib/validation.js'
 import { calculateAttendingGuests } from './lib/budget.js'
 import './App.css'
+
+const UNDO_TIMEOUT_MS = 6000
 
 /** Attending guests can be shown as soon as both inputs it depends on are valid. */
 function attendingFrom(event, errors) {
@@ -18,13 +24,44 @@ function attendingFrom(event, errors) {
 function App() {
   const [state, dispatch] = useReducer(budgetReducer, undefined, loadBudget)
   const { event, expenses } = state
+  /** Only the most recent deletion can be undone. */
+  const [pendingUndo, setPendingUndo] = useState(null)
+  const [highlightId, setHighlightId] = useState(null)
 
   // Persist the raw input on every change. Failures are tolerated (private mode, quota).
   useEffect(() => {
     saveBudget({ event, expenses })
   }, [event, expenses])
 
+  // Auto-dismiss the undo toast. A newer deletion replaces it and restarts the timer.
+  useEffect(() => {
+    if (!pendingUndo) return undefined
+    const timer = setTimeout(() => setPendingUndo(null), UNDO_TIMEOUT_MS)
+    return () => clearTimeout(timer)
+  }, [pendingUndo])
+
   const parsed = parseBudget(state)
+
+  function handleAddExpense(expense) {
+    dispatch(actions.expenseAdded(expense))
+    setHighlightId(expense.id)
+  }
+
+  function handleRemoveExpense(expense, index) {
+    dispatch(actions.expenseRemoved(expense.id))
+    setPendingUndo({ expense, index })
+  }
+
+  function handleUndo() {
+    if (!pendingUndo) return
+    const { expense, index } = pendingUndo
+    flushSync(() => {
+      dispatch(actions.expenseRestored(expense, index))
+      setHighlightId(expense.id)
+      setPendingUndo(null)
+    })
+    document.getElementById(`expense-name-${expense.id}`)?.focus()
+  }
 
   return (
     <>
@@ -48,9 +85,30 @@ function App() {
                 attendingGuests={attendingFrom(event, parsed.errors.event)}
                 onFieldChange={(field, value) => dispatch(actions.fieldChanged(field, value))}
               />
+              <ExpensesList
+                expenses={expenses}
+                errors={parsed.errors.expenses}
+                venueCost={parsed.venueCost}
+                expensesTotal={parsed.expensesTotal}
+                highlightId={highlightId}
+                onAdd={handleAddExpense}
+                onUpdate={(id, patch) => dispatch(actions.expenseUpdated(id, patch))}
+                onRemove={handleRemoveExpense}
+              />
             </div>
           </main>
         </div>
+
+        <Dock>
+          {pendingUndo && (
+            <UndoToast
+              key={pendingUndo.expense.id}
+              message={`ההוצאה „${pendingUndo.expense.name.trim() || 'ללא שם'}” נמחקה`}
+              onUndo={handleUndo}
+              onClose={() => setPendingUndo(null)}
+            />
+          )}
+        </Dock>
       </div>
     </>
   )
