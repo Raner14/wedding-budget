@@ -23,5 +23,8 @@ dist-ssr
 *.sln
 *.sw?
 
-# Personal photo originals (only optimized copies in public/images are committed)
+# Personal photo originals — never committed
 design-preview/images/
+
+# Optimized personal photos — kept out of Git until publication is explicitly approved
+public/images/
