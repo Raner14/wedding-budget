@@ -42,6 +42,7 @@ describe('Tasks page — empty state and adding', () => {
     await user.type(input(), '   להזמין   די-ג׳יי  ')
     await user.click(addButton())
     expect(titles()).toEqual(['להזמין די-ג׳יי'])
+    expect(document.activeElement).toBe(input()) // regression: focus returns to the field
   })
 
   it('rejects an empty task with an accessible error that clears on typing', async () => {

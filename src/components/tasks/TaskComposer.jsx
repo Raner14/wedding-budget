@@ -1,4 +1,4 @@
-import { useState } from 'react'
+import { useRef, useState } from 'react'
 import Icon from '../Icon.jsx'
 import Reveal from '../Reveal.jsx'
 import { MAX_TASKS, MAX_TITLE_LENGTH, TASK_MESSAGES } from '../../lib/taskState.js'
@@ -13,16 +13,19 @@ import { MAX_TASKS, MAX_TITLE_LENGTH, TASK_MESSAGES } from '../../lib/taskState.
 export default function TaskComposer({ onAdd, isFull }) {
   const [value, setValue] = useState('')
   const [error, setError] = useState(null)
+  const inputRef = useRef(null)
 
   function handleSubmit(e) {
     e.preventDefault()
     const result = onAdd(value)
     if (result) {
       setError(result)
+      inputRef.current?.focus() // the error is announced with the field it belongs to
       return
     }
     setValue('')
     setError(null)
+    inputRef.current?.focus() // ready for the next task, also after clicking the button
   }
 
   return (
@@ -31,6 +34,7 @@ export default function TaskComposer({ onAdd, isFull }) {
       <div className="composer-row">
         <div className={`input-wrap composer-input${error ? ' is-invalid' : ''}`}>
           <input
+            ref={inputRef}
             id="new-task"
             type="text"
             autoComplete="off"
