@@ -1,16 +1,30 @@
-# React + Vite
+# Wedding Budget Calculator · מתחתנים בראש שקט
 
-This template provides a minimal setup to get React working in Vite with HMR and some ESLint rules.
+A Hebrew-first (RTL) wedding budget calculator for couples planning a wedding in Israel:
+estimate total costs, expected gift income and the projected balance — no sign-up,
+data stays in the browser.
 
-Currently, two official plugins are available:
+## Stack
 
-- [@vitejs/plugin-react](https://github.com/vitejs/vite-plugin-react/blob/main/packages/plugin-react) uses [Oxc](https://oxc.rs)
-- [@vitejs/plugin-react-swc](https://github.com/vitejs/vite-plugin-react/blob/main/packages/plugin-react-swc) uses [SWC](https://swc.rs/)
+- React + Vite (JavaScript)
+- Plain CSS with design tokens (`src/styles/tokens.css`)
+- Vitest + Testing Library (jsdom)
+- ESLint
 
-## React Compiler
+## Scripts
 
-The React Compiler is not enabled on this template because of its impact on dev & build performances. To add it, see [this documentation](https://react.dev/learn/react-compiler/installation).
+```bash
+npm install
+npm run dev         # local dev server
+npm run test        # run tests once
+npm run test:watch  # run tests in watch mode
+npm run lint
+npm run build       # production build to dist/
+npm run preview     # serve the production build locally
+```
 
-## Expanding the ESLint configuration
+## Design reference
 
-If you are developing a production application, we recommend using TypeScript with type-aware lint rules enabled. Check out the [TS template](https://github.com/vitejs/vite/tree/main/packages/create-vite/template-react-ts) for information on how to integrate TypeScript and [`typescript-eslint`](https://typescript-eslint.io) in your project.
+`design-preview/index.html` is the approved, self-contained visual prototype.
+It is a reference only and is not imported by the application.
+The original couple photo (`design-preview/images/`) is intentionally not tracked in Git.

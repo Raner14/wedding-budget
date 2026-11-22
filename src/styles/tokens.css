@@ -1,0 +1,56 @@
+/*
+ * Design tokens — copied from the approved prototype (design-preview/index.html).
+ * Palette: warm ivory · blush · champagne gold · sage.
+ */
+:root {
+  /* Surfaces */
+  --ivory: #FFFBF5;
+  --cream: #FAF2E7;
+  --surface: #FFFDFA;
+
+  /* Blush / rose */
+  --blush-50: #FDF3F1;
+  --blush-100: #F9E2DE;
+  --blush-300: #EDB8B0;
+  --rose-500: #C46B76;
+  --rose-600: #A6505D;
+
+  /* Champagne / gold */
+  --champagne-100: #F7ECD8;
+  --gold-300: #E2C99A;
+  --gold-500: #C4A065;
+  --gold-700: #8A6830;
+
+  /* Sage */
+  --sage-100: #E8EFE6;
+  --sage-300: #B5C7B2;
+  --sage-500: #7D987F;
+  --sage-600: #5C7A63;
+  --sage-700: #48624F;
+
+  /* Text & lines */
+  --ink: #2F2624;
+  --ink-soft: #54473F;
+  --muted: #776A60;
+  --line: #EEE3D5;
+  --line-strong: #D2C1AC;
+
+  /* Typography */
+  --font-sans: 'Heebo', system-ui, 'Segoe UI', Arial, sans-serif;
+  --font-serif: 'Frank Ruhl Libre', 'Times New Roman', serif;
+
+  /* Elevation & motion */
+  --shadow-soft: 0 1px 2px rgb(120 80 60 / .04), 0 18px 40px -22px rgb(120 80 60 / .28);
+  --shadow-lift: 0 2px 4px rgb(120 80 60 / .05), 0 26px 50px -24px rgb(120 80 60 / .38);
+  --ring: 0 0 0 4px rgb(92 122 99 / .18);
+  --ease: cubic-bezier(.22, .8, .24, 1);
+
+  /* Layout */
+  --sticky-top: 24px;
+}
+
+/* Financial tones: profit / loss / even / stale (outdated). Always paired with an icon + word. */
+.tone-profit { --tone: #2E7A52; --tone-ink: #1F5E3D; --tone-soft: #E9F4EC; --tone-line: #C6E2D0; }
+.tone-loss   { --tone: #B4404F; --tone-ink: #8E2B39; --tone-soft: #FCEDEE; --tone-line: #F2C9CD; }
+.tone-even   { --tone: #8A6830; --tone-ink: #54473F; --tone-soft: #F7EFE2; --tone-line: #EBDDBF; }
+.tone-stale  { --tone: #A89A8B; --tone-ink: #776A60; --tone-soft: #F6F2EC; --tone-line: #E6DCCF; }

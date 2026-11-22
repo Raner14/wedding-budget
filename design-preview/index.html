@@ -1,0 +1,1573 @@
+<!doctype html>
+<html lang="he" dir="rtl">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>מתחתנים בראש שקט · תצוגת עיצוב</title>
+<link rel="preconnect" href="https://fonts.googleapis.com" />
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+<link href="https://fonts.googleapis.com/css2?family=Frank+Ruhl+Libre:wght@300;500;700&family=Heebo:wght@300;400;500;600;700&display=swap" rel="stylesheet" />
+<style>
+/* =========================================================
+   DESIGN TOKENS — ivory · blush · champagne · sage
+   ========================================================= */
+:root {
+  --ivory: #FFFBF5;
+  --cream: #FAF2E7;
+  --surface: #FFFDFA;
+  --blush-50: #FDF3F1;
+  --blush-100: #F9E2DE;
+  --blush-300: #EDB8B0;
+  --rose-500: #C46B76;
+  --rose-600: #A6505D;
+  --champagne-100: #F7ECD8;
+  --gold-300: #E2C99A;
+  --gold-500: #C4A065;
+  --gold-700: #8A6830;
+  --sage-100: #E8EFE6;
+  --sage-300: #B5C7B2;
+  --sage-500: #7D987F;
+  --sage-600: #5C7A63;
+  --sage-700: #48624F;
+  --ink: #2F2624;
+  --ink-soft: #54473F;
+  --muted: #776A60;
+  --line: #EEE3D5;
+  --line-strong: #D2C1AC;
+
+  --font-sans: 'Heebo', system-ui, 'Segoe UI', Arial, sans-serif;
+  --font-serif: 'Frank Ruhl Libre', 'Times New Roman', serif;
+
+  --shadow-soft: 0 1px 2px rgb(120 80 60 / .04), 0 18px 40px -22px rgb(120 80 60 / .28);
+  --shadow-lift: 0 2px 4px rgb(120 80 60 / .05), 0 26px 50px -24px rgb(120 80 60 / .38);
+  --ring: 0 0 0 4px rgb(92 122 99 / .18);
+  --ease: cubic-bezier(.22, .8, .24, 1);
+}
+
+*, *::before, *::after { box-sizing: border-box; }
+[hidden] { display: none !important; }
+html { -webkit-text-size-adjust: 100%; }
+@media (prefers-reduced-motion: no-preference) { html, .device { scroll-behavior: smooth; } }
+body { margin: 0; font-family: var(--font-sans); background: #E7E0D6; color: var(--ink); }
+.sr-only { position: absolute; width: 1px; height: 1px; padding: 0; margin: -1px; overflow: hidden; clip: rect(0 0 0 0); white-space: nowrap; border: 0; }
+:focus-visible { outline: 2px solid var(--sage-600); outline-offset: 3px; }
+svg { flex: none; }
+bdi { unicode-bidi: isolate; }
+
+/* =========================================================
+   PREVIEW TOOLBAR (not part of the product)
+   ========================================================= */
+.pv-toolbar {
+  position: sticky; top: 0; z-index: 100;
+  display: flex; flex-wrap: wrap; align-items: center; gap: 8px 20px;
+  padding: 10px 16px; background: #26201E; color: #F4EFE6; font-size: 13px;
+}
+.pv-title { font-weight: 600; }
+.pv-title small { font-weight: 400; opacity: .65; margin-inline-start: 6px; }
+.pv-group { display: flex; flex-wrap: wrap; align-items: center; gap: 6px; }
+.pv-group-label { opacity: .65; margin-inline-end: 2px; }
+.pv-btn { font: inherit; color: inherit; background: transparent; cursor: pointer; border: 1px solid #4F4743; border-radius: 999px; padding: 5px 12px; min-height: 32px; }
+.pv-btn:hover { border-color: #8A8178; }
+.pv-btn[aria-pressed="true"] { background: var(--gold-300); border-color: var(--gold-300); color: #26201E; font-weight: 600; }
+.pv-btn:focus-visible { outline-color: var(--gold-300); }
+
+.stage { --sticky-top: 72px; }
+.stage.is-mobile { --sticky-top: 16px; padding: 24px 16px 48px; }
+.stage.is-mobile .device {
+  width: 390px; max-width: 100%; height: min(844px, calc(100vh - 120px));
+  margin-inline: auto; overflow-y: auto; overscroll-behavior: contain;
+  border: 12px solid #1E1A18; border-radius: 48px; box-shadow: 0 30px 60px rgb(0 0 0 / .25);
+  scrollbar-width: none;
+}
+.stage.is-mobile .device::-webkit-scrollbar { display: none; }
+
+/* =========================================================
+   APP SHELL
+   ========================================================= */
+.app {
+  container: app / inline-size;
+  position: relative; min-height: 100%; overflow-x: clip; color: var(--ink);
+  background:
+    radial-gradient(700px 520px at 105% 0%, #FBE4DF 0%, transparent 60%),
+    radial-gradient(620px 520px at -10% 38%, #EAF0E6 0%, transparent 60%),
+    radial-gradient(720px 520px at 110% 70%, #F8EBD6 0%, transparent 60%),
+    radial-gradient(600px 460px at -5% 100%, #FBE7E3 0%, transparent 60%),
+    var(--ivory);
+}
+.app-inner { position: relative; max-width: 1200px; margin-inline: auto; padding: 12px 12px 24px; }
+
+/* Decorative botanicals */
+.sprig { position: absolute; pointer-events: none; color: var(--sage-500); }
+.sprig .leaf { fill: var(--sage-300); }
+.sprig .leaf-alt { fill: #CFDCCB; }
+.sprig .stem { fill: none; stroke: var(--sage-500); stroke-width: 1.6; stroke-linecap: round; }
+.blossom .petal { fill: var(--blush-300); }
+.blossom .petal-soft { fill: var(--blush-100); }
+.blossom .core { fill: var(--gold-500); }
+
+/* =========================================================
+   HERO
+   ========================================================= */
+.hero { position: relative; }
+.hero-grid { position: relative; z-index: 1; display: grid; }
+.hero-photo { order: -1; position: relative; margin: 0; }
+.photo-frame {
+  position: relative; height: 300px; overflow: hidden;
+  border-radius: 130px 130px 28px 28px;
+  border: 6px solid var(--surface);
+  outline: 1px solid var(--gold-300); outline-offset: 5px;
+  background: linear-gradient(160deg, var(--blush-100), var(--champagne-100));
+  box-shadow: 0 28px 50px -26px rgb(150 85 60 / .55);
+}
+.photo-frame img {
+  display: block; width: 100%; height: 100%; object-fit: cover; object-position: 93% 50%;
+}
+.photo-fallback {
+  position: absolute; inset: 0; display: grid; place-content: center; justify-items: center; gap: 8px;
+  color: var(--muted); font-size: 13px; text-align: center;
+}
+.hero-photo .sprig-a { width: 84px; top: -26px; inset-inline-end: -14px; transform: scaleX(-1) rotate(-8deg); }
+.hero-photo .sprig-b { width: 76px; bottom: 34px; inset-inline-start: -18px; transform: rotate(160deg); }
+.hero-photo .blossom-a { position: absolute; width: 34px; top: 18px; inset-inline-end: 22px; pointer-events: none; }
+.love-note {
+  display: none; position: absolute; z-index: 2; inset-inline-start: 28px; bottom: -22px;
+  align-items: center; gap: 8px; padding: 10px 16px; border-radius: 999px;
+  background: rgb(255 253 250 / .92); -webkit-backdrop-filter: blur(8px); backdrop-filter: blur(8px);
+  border: 1px solid var(--line); box-shadow: var(--shadow-soft);
+  font-family: var(--font-serif); font-size: 15px; color: var(--ink-soft);
+}
+.love-note svg { width: 16px; height: 16px; color: var(--rose-500); }
+
+.hero-copy {
+  position: relative; z-index: 2; margin: -60px 10px 0; padding: 26px 20px 22px; text-align: center;
+  background: rgb(255 253 250 / .95); -webkit-backdrop-filter: blur(8px); backdrop-filter: blur(8px);
+  border: 1px solid var(--line); border-radius: 28px; box-shadow: var(--shadow-lift);
+}
+.hero-eyebrow {
+  display: inline-flex; align-items: center; gap: 8px; margin: 0; padding: 6px 14px; border-radius: 999px;
+  background: var(--blush-50); border: 1px solid var(--blush-100);
+  font-size: 13px; font-weight: 600; color: var(--rose-600);
+}
+.hero-eyebrow svg { width: 14px; height: 14px; }
+.hero-title {
+  margin: 14px 0 0; font-family: var(--font-serif); font-weight: 500;
+  font-size: 40px; line-height: 1.12; letter-spacing: -.01em; color: var(--ink);
+}
+.hl { position: relative; display: inline-block; color: var(--rose-600); white-space: nowrap; }
+.swash { position: absolute; inset-inline: -2%; bottom: -12px; width: 104%; height: 16px; color: var(--gold-500); overflow: visible; }
+.swash path { fill: none; stroke: currentColor; stroke-width: 3; stroke-linecap: round; }
+.hero-sub { margin: 18px auto 0; max-width: 32ch; font-size: 17px; line-height: 1.6; color: var(--ink-soft); }
+.hero-cta { margin-top: 22px; }
+.hero-cta .btn { width: 100%; padding-inline: 18px; font-size: 16px; white-space: nowrap; }
+.hero-perks { list-style: none; margin: 16px 0 0; padding: 0; display: flex; flex-wrap: wrap; justify-content: center; gap: 6px 16px; font-size: 13px; color: var(--muted); }
+.hero-perks li { display: inline-flex; align-items: center; gap: 6px; }
+.hero-perks svg { width: 15px; height: 15px; color: var(--gold-500); }
+
+/* =========================================================
+   SECTION INTRO
+   ========================================================= */
+.section-intro { margin: 44px auto 22px; max-width: 640px; text-align: center; scroll-margin-top: 16px; }
+.ornament { display: flex; align-items: center; justify-content: center; gap: 12px; color: var(--gold-500); }
+.ornament::before, .ornament::after { content: ""; width: 56px; height: 1px; background: linear-gradient(to left, transparent, var(--gold-300)); }
+.ornament::after { background: linear-gradient(to right, transparent, var(--gold-300)); }
+.ornament svg { width: 30px; height: 30px; }
+.kicker { margin: 12px 0 0; font-size: 13px; font-weight: 600; letter-spacing: .08em; color: var(--gold-700); }
+.section-title { margin: 6px 0 0; font-family: var(--font-serif); font-weight: 500; font-size: 30px; line-height: 1.2; }
+.section-sub { margin: 10px 0 0; font-size: 15px; line-height: 1.6; color: var(--muted); }
+
+/* =========================================================
+   LAYOUT & CARDS
+   ========================================================= */
+.layout { display: grid; gap: 16px; }
+.col-inputs { display: grid; gap: 16px; min-width: 0; }
+.col-summary { min-width: 0; scroll-margin-top: 16px; }
+
+.card {
+  position: relative; min-width: 0; padding: 20px;
+  background: var(--surface); border: 1px solid var(--line); border-radius: 28px; box-shadow: var(--shadow-soft);
+}
+.card-head { display: flex; align-items: center; gap: 14px; margin-bottom: 22px; }
+.card-icon {
+  flex: none; display: grid; place-items: center; width: 50px; height: 50px; border-radius: 18px;
+  background: linear-gradient(145deg, var(--blush-50), var(--champagne-100));
+  border: 1px solid var(--blush-100); color: var(--rose-600);
+}
+.card-icon svg { width: 24px; height: 24px; }
+.card-kicker { margin: 0; font-size: 12px; font-weight: 600; letter-spacing: .08em; color: var(--gold-700); }
+.card-title { margin: 2px 0 0; font-family: var(--font-serif); font-weight: 500; font-size: 24px; line-height: 1.2; }
+.card-desc { margin: 4px 0 0; font-size: 14px; line-height: 1.5; color: var(--muted); }
+
+/* =========================================================
+   FORM FIELDS
+   ========================================================= */
+fieldset { border: 0; padding: 0; margin: 0 0 26px; min-width: 0; }
+fieldset:last-of-type { margin-bottom: 0; }
+legend {
+  float: none; width: 100%; padding: 0; margin-bottom: 14px;
+  display: flex; align-items: center; gap: 8px; font-size: 14px; font-weight: 600; color: var(--ink-soft);
+}
+legend svg { width: 18px; height: 18px; color: var(--gold-500); }
+legend::after { content: ""; flex: 1; height: 1px; background: linear-gradient(to left, var(--line-strong), transparent); opacity: .7; }
+.fields { display: grid; gap: 16px; }
+.field { min-width: 0; }
+.field > label { display: block; margin-bottom: 7px; font-size: 14px; font-weight: 500; color: var(--ink); }
+.input-wrap {
+  display: flex; align-items: center; min-height: 52px; padding-inline-end: 6px;
+  background: #FFFEFC; border: 1px solid var(--line-strong); border-radius: 16px;
+  transition: border-color .2s, box-shadow .2s, background-color .2s;
+}
+.input-wrap:hover { border-color: var(--gold-500); }
+.input-wrap:focus-within { border-color: var(--sage-600); background: #fff; box-shadow: var(--ring); }
+.input-wrap input {
+  flex: 1; min-width: 0; border: 0; outline: none; background: transparent; color: inherit;
+  font: inherit; font-size: 17px; padding: 12px 16px; font-variant-numeric: tabular-nums;
+}
+.input-wrap input::placeholder { color: #AE9F90; }
+.unit { flex: none; padding: 4px 11px; border-radius: 999px; background: var(--cream); color: var(--muted); font-size: 13px; }
+.input-wrap.is-invalid { border-color: #C2414F; background: #FFFAFA; }
+.input-wrap.is-invalid:focus-within { box-shadow: 0 0 0 4px rgb(194 65 79 / .15); }
+.help { margin: 7px 0 0; font-size: 13px; line-height: 1.5; color: var(--muted); }
+.error { margin: 7px 0 0; display: flex; align-items: flex-start; gap: 6px; font-size: 13px; font-weight: 500; line-height: 1.4; color: #A3303F; }
+.error svg { width: 15px; height: 15px; margin-top: 1px; }
+
+.computed {
+  grid-column: 1 / -1; margin: 0; display: flex; align-items: center; gap: 12px;
+  padding: 12px 14px; border-radius: 18px;
+  background: linear-gradient(to left, var(--sage-100), #F4F7F1); border: 1px solid #D5E1D2;
+  font-size: 14px; color: var(--sage-700);
+}
+.computed-icon { display: grid; place-items: center; width: 36px; height: 36px; border-radius: 12px; background: #fff; color: var(--sage-600); }
+.computed-icon svg { width: 20px; height: 20px; }
+.computed strong { font-size: 16px; font-variant-numeric: tabular-nums; }
+
+.reserve { grid-column: 1 / -1; border: 1px dashed var(--gold-300); border-radius: 20px; background: var(--cream); transition: background-color .2s; }
+.reserve > summary {
+  list-style: none; cursor: pointer; display: flex; align-items: center; gap: 10px;
+  min-height: 52px; padding: 12px 16px; font-size: 14px; font-weight: 500; border-radius: 20px;
+}
+.reserve > summary::-webkit-details-marker { display: none; }
+.reserve > summary .chev { width: 16px; height: 16px; color: var(--muted); transition: transform .25s var(--ease); }
+.reserve[open] > summary .chev { transform: rotate(-90deg); }
+.reserve > summary .opt { color: var(--muted); font-weight: 400; }
+.reserve-body { padding: 0 16px 16px; }
+.reserve-body .help-top { margin: 0 0 14px; }
+
+/* =========================================================
+   BUTTONS
+   ========================================================= */
+.btn {
+  position: relative; overflow: hidden;
+  display: inline-flex; align-items: center; justify-content: center; gap: 10px;
+  min-height: 48px; padding: 12px 22px; border-radius: 999px;
+  font: inherit; font-size: 15px; font-weight: 600; text-decoration: none; cursor: pointer;
+  border: 1px solid transparent;
+  transition: transform .25s var(--ease), box-shadow .25s var(--ease), background-color .2s, border-color .2s, color .2s;
+}
+.btn svg { width: 18px; height: 18px; }
+.btn-lg { min-height: 56px; padding: 14px 28px; font-size: 17px; }
+.btn-gold {
+  color: #2E2420;
+  background: linear-gradient(135deg, #EBD3A3 0%, #D2AF72 50%, #BF9A5E 100%);
+  box-shadow: 0 12px 26px -12px rgb(160 115 55 / .7), inset 0 1px 0 rgb(255 255 255 / .55);
+}
+.btn-gold::after {
+  content: ""; position: absolute; inset: 0; pointer-events: none;
+  background: linear-gradient(110deg, transparent 30%, rgb(255 255 255 / .45) 50%, transparent 70%);
+  transform: translateX(120%);
+}
+.btn-soft { background: #fff; border-color: var(--line-strong); color: var(--ink); }
+.btn-soft:hover { background: var(--blush-50); border-color: var(--blush-300); }
+.btn-ghost { background: transparent; border-color: var(--line-strong); color: var(--ink-soft); }
+.btn-ghost:hover { background: #fff; border-color: var(--gold-500); }
+.btn-dashed {
+  width: 100%; border-radius: 18px; border: 1.5px dashed var(--gold-300); background: rgb(255 255 255 / .6); color: var(--rose-600);
+}
+.btn-dashed:hover { background: var(--blush-50); border-color: var(--blush-300); }
+.btn-dashed .plus { display: grid; place-items: center; width: 26px; height: 26px; border-radius: 50%; background: var(--blush-100); color: var(--rose-600); }
+.btn-dashed .plus svg { width: 15px; height: 15px; }
+.btn:disabled { opacity: .5; cursor: not-allowed; }
+@media (prefers-reduced-motion: no-preference) {
+  .btn-gold:hover { transform: translateY(-2px); box-shadow: 0 18px 34px -14px rgb(160 115 55 / .75), inset 0 1px 0 rgb(255 255 255 / .55); }
+  .btn-gold:hover::after { transform: translateX(-120%); transition: transform .9s var(--ease); }
+  .btn:active { transform: translateY(0) scale(.98); }
+  .btn-soft:hover, .btn-ghost:hover { transform: translateY(-1px); }
+}
+.icon-btn {
+  display: grid; place-items: center; width: 44px; height: 44px; padding: 0;
+  border: 1px solid transparent; border-radius: 14px; background: transparent;
+  color: var(--muted); cursor: pointer; transition: background-color .2s, color .2s, transform .2s;
+}
+.icon-btn svg { width: 19px; height: 19px; }
+.icon-btn.danger:hover, .icon-btn.danger:focus-visible { color: #A3303F; background: #FCEBEC; }
+.link-sm { font-size: 13px; color: var(--sage-700); text-decoration: underline; text-decoration-color: var(--sage-300); text-underline-offset: 3px; }
+.link-sm:hover { text-decoration-color: currentColor; }
+.link-btn { padding: 0; margin-top: 4px; border: 0; background: none; font: inherit; font-weight: 600; color: inherit; text-decoration: underline; text-underline-offset: 3px; cursor: pointer; }
+
+/* =========================================================
+   BADGES & ALERTS
+   ========================================================= */
+.badge { display: inline-flex; align-items: center; gap: 4px; padding: 3px 10px; border-radius: 999px; font-size: 12px; font-weight: 500; background: #fff; border: 1px solid var(--line); color: var(--muted); }
+.badge-warn { background: #FFF3D9; border-color: #EED9A8; color: #7A5000; font-weight: 600; }
+.alert { display: flex; align-items: flex-start; gap: 10px; padding: 14px 16px; margin-top: 14px; font-size: 13px; line-height: 1.55; border-radius: 18px; border: 1px solid; }
+.alert svg { width: 18px; height: 18px; margin-top: 1px; }
+.alert p { margin: 2px 0 0; }
+.alert strong { display: block; font-size: 14px; }
+.alert-warn { background: #FFF6E2; border-color: #EED9A8; color: #5C4000; }
+.alert-info { background: var(--champagne-100); border-color: #EBDDBF; color: var(--ink-soft); }
+.alert-info svg { color: var(--gold-700); }
+.alert-first { margin-top: 0; margin-bottom: 16px; }
+
+/* =========================================================
+   EXPENSES
+   ========================================================= */
+.venue-row {
+  display: flex; flex-wrap: wrap; align-items: center; gap: 10px 14px; padding: 14px 16px; border-radius: 20px;
+  background: linear-gradient(to left, var(--champagne-100), var(--cream)); border: 1px solid #EBDDBF;
+}
+.venue-row .exp-icon { background: #fff; color: var(--gold-700); }
+.venue-meta { flex: 1; min-width: 0; display: flex; flex-wrap: wrap; align-items: center; gap: 4px 10px; }
+.venue-name { font-weight: 600; }
+.venue-amount { font-weight: 700; font-size: 17px; font-variant-numeric: tabular-nums; }
+.exp-list { list-style: none; margin: 12px 0 0; padding: 0; display: grid; gap: 10px; }
+.exp-row {
+  display: grid; gap: 10px; align-items: center;
+  grid-template-columns: 40px minmax(0, 1fr) 44px;
+  grid-template-areas: "icon name del" "amount amount amount";
+  padding: 12px; border: 1px solid var(--line); border-radius: 20px; background: #FFFEFC;
+  transition: border-color .2s, box-shadow .25s var(--ease), opacity .22s, transform .22s var(--ease);
+}
+.exp-row:hover { border-color: var(--gold-300); box-shadow: 0 10px 24px -18px rgb(120 80 60 / .4); }
+.exp-icon {
+  grid-area: icon; display: grid; place-items: center; width: 40px; height: 40px; border-radius: 14px;
+  background: var(--blush-50); color: var(--rose-600); border: 1px solid var(--blush-100);
+}
+.exp-icon svg { width: 20px; height: 20px; }
+.exp-name { grid-area: name; min-width: 0; }
+.exp-amount { grid-area: amount; min-width: 0; }
+.exp-del { grid-area: del; }
+.exp-row .input-wrap { min-height: 46px; }
+.exp-row .input-wrap input { font-size: 16px; padding: 10px 14px; }
+.exp-name .input-wrap { border-color: transparent; background: transparent; }
+.exp-name .input-wrap:hover { border-color: var(--line-strong); background: #fff; }
+.exp-name .input-wrap:focus-within { border-color: var(--sage-600); background: #fff; }
+.exp-name .input-wrap.is-invalid { border-color: #C2414F; background: #FFFAFA; }
+.exp-name input { font-weight: 500; }
+.exp-row.is-leaving { opacity: 0; transform: scale(.97); }
+@media (prefers-reduced-motion: no-preference) {
+  .exp-row.is-new { animation: row-in .45s var(--ease); }
+  @keyframes row-in { from { opacity: 0; transform: translateY(-6px); background: var(--blush-50); } }
+}
+.exp-empty { margin-top: 12px; padding: 22px 16px; text-align: center; border: 1.5px dashed var(--line-strong); border-radius: 20px; font-size: 14px; color: var(--muted); background: rgb(255 255 255 / .5); }
+.exp-empty strong { display: block; margin-bottom: 2px; font-family: var(--font-serif); font-size: 17px; font-weight: 500; color: var(--ink-soft); }
+.exp-actions { margin-top: 12px; }
+.exp-footer { display: flex; align-items: baseline; justify-content: space-between; gap: 12px; margin-top: 16px; padding-top: 16px; border-top: 1px solid var(--line); }
+.subtotal-label { font-size: 14px; color: var(--muted); }
+.subtotal-value { font-size: 18px; font-weight: 700; font-variant-numeric: tabular-nums; }
+
+/* =========================================================
+   TONES
+   ========================================================= */
+.tone-profit { --tone: #2E7A52; --tone-ink: #1F5E3D; --tone-soft: #E9F4EC; --tone-line: #C6E2D0; }
+.tone-loss   { --tone: #B4404F; --tone-ink: #8E2B39; --tone-soft: #FCEDEE; --tone-line: #F2C9CD; }
+.tone-even   { --tone: #8A6830; --tone-ink: #54473F; --tone-soft: #F7EFE2; --tone-line: #EBDDBF; }
+.tone-stale  { --tone: #A89A8B; --tone-ink: #776A60; --tone-soft: #F6F2EC; --tone-line: #E6DCCF; }
+
+/* =========================================================
+   SUMMARY
+   ========================================================= */
+.summary-card { overflow: hidden; background: linear-gradient(172deg, #FFFDFA 0%, #FDF4F0 100%); }
+.summary-card > .blossom-deco { position: absolute; width: 74px; top: -14px; inset-inline-end: -12px; opacity: .9; pointer-events: none; }
+.summary-card > .sprig { width: 90px; top: 34px; inset-inline-end: -30px; transform: rotate(200deg); opacity: .7; }
+.summary-head { position: relative; display: flex; align-items: center; justify-content: space-between; gap: 8px; margin-bottom: 18px; }
+.live-dot { display: inline-flex; align-items: center; gap: 7px; font-size: 12px; color: var(--muted); }
+.live-dot::before { content: ""; width: 7px; height: 7px; border-radius: 50%; background: var(--sage-500); box-shadow: 0 0 0 3px var(--sage-100); }
+@media (prefers-reduced-motion: no-preference) {
+  .live-dot::before { animation: breathe 2.6s ease-in-out infinite; }
+  @keyframes breathe { 50% { box-shadow: 0 0 0 6px rgb(232 239 230 / .6); } }
+}
+.balance {
+  position: relative; padding: 20px; border-radius: 24px; text-align: center;
+  background: var(--tone-soft); border: 1px solid var(--tone-line);
+  transition: background-color .4s, border-color .4s;
+}
+.balance-top { display: flex; flex-wrap: wrap; align-items: center; justify-content: center; gap: 8px; color: var(--tone-ink); }
+.status-icon { display: grid; place-items: center; width: 30px; height: 30px; border-radius: 50%; background: #fff; border: 1px solid var(--tone-line); color: var(--tone); }
+.status-icon svg { width: 16px; height: 16px; }
+.balance-label { font-size: 16px; font-weight: 700; }
+.balance-amount {
+  display: block; margin-top: 8px; font-size: 42px; font-weight: 700; line-height: 1.05;
+  letter-spacing: -.01em; font-variant-numeric: tabular-nums; color: var(--tone-ink); overflow-wrap: anywhere;
+}
+.balance-note { margin: 8px auto 0; max-width: 34ch; font-size: 14px; line-height: 1.55; color: var(--ink-soft); }
+@media (prefers-reduced-motion: no-preference) {
+  .balance.pop { animation: pop .55s var(--ease); }
+  @keyframes pop { 30% { transform: scale(1.025); } }
+}
+
+.compare { display: grid; gap: 14px; margin-top: 20px; }
+.cmp-top { display: flex; align-items: baseline; justify-content: space-between; gap: 12px; font-size: 14px; color: var(--ink-soft); }
+.cmp-top small { display: block; margin-top: 1px; font-size: 12px; color: var(--muted); font-variant-numeric: tabular-nums; }
+.cmp-top bdi { font-weight: 700; font-size: 16px; color: var(--ink); font-variant-numeric: tabular-nums; white-space: nowrap; }
+.cmp-track { height: 10px; margin-top: 7px; border-radius: 999px; background: rgb(210 193 172 / .28); overflow: hidden; }
+.cmp-bar { display: block; height: 100%; width: 0; border-radius: 999px; transition: width .7s var(--ease); }
+.bar-exp { background: linear-gradient(to left, var(--blush-300), var(--rose-500)); }
+.bar-gift { background: linear-gradient(to left, var(--sage-300), var(--sage-600)); }
+
+.mini-title { margin: 20px 0 4px; font-size: 13px; font-weight: 600; letter-spacing: .04em; color: var(--gold-700); }
+.breakdown { margin: 0; display: grid; }
+.bd-row { display: flex; align-items: baseline; justify-content: space-between; gap: 12px; padding: 10px 0; border-bottom: 1px dashed var(--line-strong); }
+.bd-row:last-child { border-bottom: 0; }
+.bd-row dt { font-size: 14px; color: var(--ink-soft); }
+.bd-sub { display: block; margin-top: 2px; font-size: 12px; color: var(--muted); font-variant-numeric: tabular-nums; }
+.bd-row dd { margin: 0; font-weight: 600; font-variant-numeric: tabular-nums; white-space: nowrap; }
+
+.metrics { display: grid; grid-template-columns: repeat(auto-fit, minmax(160px, 1fr)); gap: 10px; margin-top: 16px; }
+.metric { padding: 16px; border-radius: 20px; background: rgb(255 255 255 / .75); border: 1px solid var(--line); transition: transform .25s var(--ease), box-shadow .25s var(--ease); }
+@media (prefers-reduced-motion: no-preference) { .metric:hover { transform: translateY(-2px); box-shadow: 0 14px 28px -20px rgb(120 80 60 / .45); } }
+.metric-head { display: flex; align-items: center; gap: 8px; }
+.metric-head svg { width: 18px; height: 18px; color: var(--gold-500); }
+.metric-label { margin: 0; font-size: 13px; font-weight: 500; color: var(--muted); }
+.metric-value { display: block; margin-top: 6px; font-size: 24px; font-weight: 700; font-variant-numeric: tabular-nums; }
+.metric-value.is-text { font-size: 15px; line-height: 1.35; }
+.metric-sub { margin: 4px 0 0; font-size: 12px; line-height: 1.5; color: var(--muted); }
+.metric-cmp { margin: 8px 0 0; display: flex; align-items: flex-start; gap: 4px; font-size: 12.5px; line-height: 1.45; font-weight: 500; }
+.metric-cmp svg { width: 14px; height: 14px; margin-top: 2px; }
+.cmp-pos { color: #1F5E3D; }
+.cmp-neg { color: #8E2B39; }
+.is-stale .metric-value, .is-stale .bd-row dd, .is-stale .cmp-top bdi, .is-stale .metric-cmp { color: var(--muted); }
+.is-stale .cmp-bar { filter: grayscale(1); opacity: .5; }
+.disclaimer { margin: 16px 0 0; text-align: center; font-size: 12px; color: var(--muted); }
+
+.summary-empty { padding: 18px 4px 8px; text-align: center; }
+.empty-art { position: relative; width: 96px; height: 96px; margin: 0 auto 14px; display: grid; place-items: center; border-radius: 50%; background: radial-gradient(circle, var(--champagne-100), var(--blush-50)); color: var(--gold-700); }
+.empty-art svg { width: 44px; height: 44px; }
+.summary-empty h4 { margin: 0; font-family: var(--font-serif); font-weight: 500; font-size: 22px; }
+.summary-empty p { margin: 6px 0 0; font-size: 14px; color: var(--muted); }
+.empty-steps { display: inline-grid; gap: 10px; margin: 18px 0 0; padding: 0; list-style: none; text-align: start; counter-reset: s; }
+.empty-steps li { display: flex; align-items: center; gap: 10px; font-size: 14px; color: var(--ink-soft); counter-increment: s; }
+.empty-steps li::before { content: counter(s); display: grid; place-items: center; width: 26px; height: 26px; border-radius: 50%; background: #fff; border: 1px solid var(--gold-300); font-family: var(--font-serif); font-size: 13px; font-weight: 700; color: var(--gold-700); }
+
+/* =========================================================
+   WHAT-IF
+   ========================================================= */
+.whatif { margin-top: 16px; overflow: hidden; }
+.whatif > .sprig { width: 110px; bottom: -24px; inset-inline-start: -26px; transform: rotate(-20deg); opacity: .55; }
+.sliders { position: relative; display: grid; gap: 12px; }
+.slider-field { padding: 16px; border-radius: 22px; background: var(--cream); border: 1px solid var(--line); transition: border-color .2s; }
+.slider-field:hover { border-color: var(--gold-300); }
+.slider-top { display: flex; align-items: center; justify-content: space-between; gap: 8px; }
+.slider-top label { display: flex; align-items: center; gap: 8px; font-size: 14px; font-weight: 500; }
+.slider-top label svg { width: 18px; height: 18px; color: var(--gold-500); }
+.slider-top output { min-width: 56px; padding: 3px 10px; border-radius: 999px; background: #fff; border: 1px solid var(--line); text-align: center; font-size: 15px; font-weight: 700; color: var(--ink); font-variant-numeric: tabular-nums; unicode-bidi: isolate; }
+input[type="range"] { -webkit-appearance: none; appearance: none; width: 100%; height: 32px; margin: 10px 0 2px; background: transparent; cursor: pointer; --fill: var(--line); }
+input[type="range"]:focus-visible { outline: none; }
+input[type="range"]::-webkit-slider-runnable-track { height: 8px; border-radius: 999px; background: var(--fill); }
+input[type="range"]::-webkit-slider-thumb {
+  -webkit-appearance: none; width: 26px; height: 26px; margin-top: -9px; border-radius: 50%;
+  background: radial-gradient(circle, #fff 0 38%, var(--gold-500) 40% 100%);
+  border: 3px solid #fff; box-shadow: 0 2px 8px rgb(120 80 60 / .35); transition: transform .2s var(--ease);
+}
+input[type="range"]::-moz-range-track { height: 8px; border-radius: 999px; background: var(--fill); }
+input[type="range"]::-moz-range-thumb { width: 20px; height: 20px; border-radius: 50%; background: radial-gradient(circle, #fff 0 38%, var(--gold-500) 40% 100%); border: 3px solid #fff; box-shadow: 0 2px 8px rgb(120 80 60 / .35); }
+input[type="range"]:hover::-webkit-slider-thumb { transform: scale(1.1); }
+input[type="range"]:focus-visible::-webkit-slider-thumb { box-shadow: 0 0 0 6px rgb(92 122 99 / .25), 0 2px 8px rgb(120 80 60 / .35); }
+input[type="range"]:focus-visible::-moz-range-thumb { box-shadow: 0 0 0 6px rgb(92 122 99 / .25); }
+input[type="range"]:disabled { cursor: not-allowed; }
+.slider-scale { display: flex; justify-content: space-between; font-size: 12px; color: var(--muted); font-variant-numeric: tabular-nums; }
+.slider-hint { margin: 10px 0 0; font-size: 13px; color: var(--ink-soft); }
+.whatif-results { position: relative; display: grid; gap: 10px; margin-top: 16px; }
+.w-tile { padding: 16px 18px; border-radius: 22px; background: var(--tone-soft); border: 1px solid var(--tone-line); transition: background-color .4s, border-color .4s; }
+.w-label { margin: 0; font-size: 13px; font-weight: 500; color: var(--muted); }
+.w-value { display: flex; flex-wrap: wrap; align-items: center; gap: 6px; margin-top: 4px; font-size: 20px; font-weight: 700; color: var(--tone-ink); font-variant-numeric: tabular-nums; }
+.w-value svg { width: 18px; height: 18px; }
+.whatif.is-disabled .sliders, .whatif.is-disabled .whatif-results { opacity: .5; }
+
+/* =========================================================
+   FOOTER
+   ========================================================= */
+.site-footer { position: relative; display: grid; justify-items: center; gap: 12px; margin-top: 48px; padding: 8px 8px 12px; text-align: center; font-size: 13px; color: var(--muted); }
+.site-footer p { margin: 0; max-width: 62ch; line-height: 1.6; }
+.footer-sign { display: inline-flex; align-items: center; gap: 8px; font-family: var(--font-serif); font-size: 18px; color: var(--ink-soft); }
+.footer-sign svg { width: 16px; height: 16px; color: var(--rose-500); }
+
+/* =========================================================
+   DOCK
+   ========================================================= */
+.dock { position: sticky; bottom: 0; z-index: 30; display: grid; justify-items: center; gap: 8px; padding: 0 10px 10px; pointer-events: none; }
+.dock > * { pointer-events: auto; }
+.toast {
+  position: relative; overflow: hidden; width: min(100%, 440px);
+  display: flex; align-items: center; gap: 6px; padding-block: 8px; padding-inline: 18px 6px;
+  background: #3A2E2C; color: #FBF5EC; border-radius: 18px; box-shadow: 0 18px 40px -12px rgb(40 25 20 / .5); font-size: 14px;
+}
+@media (prefers-reduced-motion: no-preference) {
+  .toast:not([hidden]) { animation: toast-in .35s var(--ease); }
+  @keyframes toast-in { from { opacity: 0; transform: translateY(12px); } }
+}
+.toast-msg { flex: 1; min-width: 0; }
+.toast-undo { min-height: 40px; padding: 8px 14px; border: 0; border-radius: 12px; background: rgb(226 201 154 / .14); font: inherit; font-weight: 700; color: #EBD3A3; cursor: pointer; }
+.toast-undo:hover { background: rgb(226 201 154 / .24); }
+.toast-close { display: grid; place-items: center; width: 36px; height: 36px; border: 0; border-radius: 10px; background: transparent; color: #CFC3B4; cursor: pointer; }
+.toast-close svg { width: 16px; height: 16px; }
+.toast-close:hover { background: rgb(255 255 255 / .08); }
+.toast :focus-visible { outline-color: #EBD3A3; }
+.toast-progress { position: absolute; inset-inline: 0; bottom: 0; height: 3px; background: linear-gradient(to left, var(--gold-300), var(--blush-300)); transform-origin: right; }
+.toast.is-running .toast-progress { animation: shrink 6s linear forwards; }
+@keyframes shrink { to { transform: scaleX(0); } }
+@media (prefers-reduced-motion: reduce) { .toast.is-running .toast-progress { animation: none; } }
+
+.mobile-bar {
+  width: 100%; display: flex; align-items: center; gap: 12px; padding: 10px 12px 10px 16px;
+  border-radius: 24px; text-decoration: none; color: var(--ink);
+  background: rgb(255 253 250 / .94); -webkit-backdrop-filter: blur(10px); backdrop-filter: blur(10px);
+  border: 1px solid var(--line); box-shadow: 0 -4px 30px -6px rgb(120 80 60 / .28);
+}
+.mb-status { flex: 1; min-width: 0; display: flex; align-items: center; gap: 10px; }
+.mb-icon { display: grid; place-items: center; width: 38px; height: 38px; border-radius: 50%; background: var(--tone-soft); border: 1px solid var(--tone-line); color: var(--tone); }
+.mb-icon svg { width: 18px; height: 18px; }
+.mb-text { display: grid; min-width: 0; }
+.mb-label { display: flex; align-items: center; gap: 6px; font-size: 12px; font-weight: 600; color: var(--tone-ink); }
+.mb-label .badge { padding: 0 7px; font-size: 11px; }
+.mb-amount { font-size: 19px; font-weight: 700; color: var(--tone-ink); font-variant-numeric: tabular-nums; }
+.mb-cta { display: flex; align-items: center; gap: 4px; padding: 8px 14px; border-radius: 999px; background: var(--champagne-100); font-size: 13px; font-weight: 600; color: var(--gold-700); white-space: nowrap; }
+.mb-cta svg { width: 15px; height: 15px; }
+
+/* =========================================================
+   ENTRANCE ANIMATIONS (only when motion is allowed and JS runs)
+   ========================================================= */
+@media (prefers-reduced-motion: no-preference) {
+  .motion .reveal { opacity: 0; transform: translateY(18px); transition: opacity .8s var(--ease), transform .8s var(--ease); }
+  .motion .reveal.is-visible { opacity: 1; transform: none; }
+  .motion .hero-photo.reveal { transform: translateY(10px) scale(.985); }
+  .motion .hero-photo.reveal.is-visible { transform: none; }
+  .motion .swash path { stroke-dasharray: 260; stroke-dashoffset: 260; }
+  .motion .is-visible .swash path { transition: stroke-dashoffset 1.2s .5s var(--ease); stroke-dashoffset: 0; }
+}
+
+/* =========================================================
+   BREAKPOINTS (container queries in the prototype; media queries in prod)
+   ========================================================= */
+@container app (min-width: 640px) {
+  .app-inner { padding: 24px 24px 32px; }
+  .photo-frame { height: 400px; border-radius: 200px 200px 32px 32px; border-width: 8px; object-position: 100% 50%; }
+  .photo-frame img { object-position: 100% 50%; }
+  .hero-photo .sprig-a { width: 120px; top: -34px; }
+  .hero-photo .sprig-b { width: 110px; }
+  .hero-photo .blossom-a { width: 44px; }
+  .hero-copy { margin: -80px auto 0; max-width: 560px; padding: 32px 36px 28px; }
+  .hero-title { font-size: 50px; }
+  .hero-cta .btn { width: auto; padding-inline: 28px; font-size: 17px; }
+  .section-intro { margin-top: 64px; margin-bottom: 28px; }
+  .section-title { font-size: 38px; }
+  .layout, .col-inputs { gap: 24px; }
+  .card { padding: 28px; }
+  .fields { grid-template-columns: 1fr 1fr; gap: 18px 20px; }
+  .exp-row {
+    grid-template-columns: 40px minmax(0, 1fr) 200px 44px; grid-template-areas: "icon name amount del";
+    padding: 8px 8px 8px 8px;
+  }
+  .exp-row .exp-icon { margin-inline-start: 4px; }
+  .whatif { margin-top: 24px; }
+  .whatif-results { grid-template-columns: 1fr 1fr auto; align-items: center; }
+  .balance-amount { font-size: 46px; }
+}
+@container app (min-width: 1024px) {
+  .app-inner { padding: 28px 32px 40px; }
+  .hero-grid { grid-template-columns: minmax(0, 1fr) minmax(0, 1.08fr); align-items: center; gap: 64px; min-height: 640px; padding: 24px 12px 8px; }
+  .hero-photo { order: 0; }
+  .photo-frame { height: 580px; border-radius: 240px 240px 40px 40px; border-width: 10px; outline-offset: 8px; }
+  .photo-frame img { object-position: 80% 50%; }
+  .hero-photo .sprig-a { width: 150px; top: -40px; inset-inline-end: -40px; }
+  .hero-photo .sprig-b { width: 140px; bottom: 70px; inset-inline-start: -56px; }
+  .hero-photo .blossom-a { width: 56px; top: 40px; inset-inline-end: 6px; }
+  .love-note { display: inline-flex; }
+  .hero-copy { margin: 0; max-width: none; padding: 0; text-align: start; background: none; border: 0; box-shadow: none; -webkit-backdrop-filter: none; backdrop-filter: none; }
+  .hero-title { font-size: 72px; line-height: 1.05; }
+  .hero-sub { margin-inline: 0; font-size: 21px; max-width: 26ch; }
+  .hero-cta { margin-top: 32px; }
+  .hero-perks { justify-content: flex-start; margin-top: 24px; font-size: 14px; }
+  .section-intro { margin-top: 88px; margin-bottom: 36px; }
+  .section-title { font-size: 44px; }
+  .layout { grid-template-columns: minmax(0, 7fr) minmax(0, 5fr); align-items: start; gap: 28px; }
+  .col-summary { position: sticky; top: var(--sticky-top); }
+  .card { padding: 32px; }
+  .card-title { font-size: 26px; }
+  .sliders { grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 16px; }
+  .whatif { margin-top: 28px; }
+  .balance-amount { font-size: 50px; }
+  .mobile-bar { display: none; }
+}
+</style>
+</head>
+<body>
+
+<!-- ============ Reusable SVG art ============ -->
+<svg width="0" height="0" style="position:absolute" aria-hidden="true" focusable="false">
+  <defs>
+    <symbol id="sprig" viewBox="0 0 120 120">
+      <path d="M8 114 C 34 90, 62 58, 112 8" fill="none" stroke="#7D987F" stroke-width="1.6" stroke-linecap="round" />
+      <ellipse fill="#B5C7B2" cx="30" cy="99" rx="11" ry="4.6" transform="rotate(18 30 99)" />
+      <ellipse fill="#CFDCCB" cx="33" cy="80" rx="11" ry="4.6" transform="rotate(72 33 80)" />
+      <ellipse fill="#B5C7B2" cx="56" cy="74" rx="12" ry="5" transform="rotate(14 56 74)" />
+      <ellipse fill="#CFDCCB" cx="58" cy="52" rx="12" ry="5" transform="rotate(76 58 52)" />
+      <ellipse fill="#B5C7B2" cx="82" cy="45" rx="11" ry="4.6" transform="rotate(12 82 45)" />
+      <ellipse fill="#CFDCCB" cx="84" cy="25" rx="11" ry="4.6" transform="rotate(78 84 25)" />
+      <ellipse fill="#B5C7B2" cx="106" cy="16" rx="8" ry="3.6" transform="rotate(40 106 16)" />
+    </symbol>
+    <symbol id="blossom" viewBox="0 0 40 40">
+      <g>
+        <ellipse fill="#EDB8B0" cx="20" cy="10.5" rx="6" ry="9" />
+        <ellipse fill="#F9E2DE" cx="20" cy="10.5" rx="6" ry="9" transform="rotate(72 20 20)" />
+        <ellipse fill="#EDB8B0" cx="20" cy="10.5" rx="6" ry="9" transform="rotate(144 20 20)" />
+        <ellipse fill="#F9E2DE" cx="20" cy="10.5" rx="6" ry="9" transform="rotate(216 20 20)" />
+        <ellipse fill="#EDB8B0" cx="20" cy="10.5" rx="6" ry="9" transform="rotate(288 20 20)" />
+        <circle fill="#C4A065" cx="20" cy="20" r="3.6" />
+      </g>
+    </symbol>
+    <symbol id="rings" viewBox="0 0 48 48">
+      <g fill="none" stroke="currentColor" stroke-width="2.2"><circle cx="18.5" cy="28" r="11"/><circle cx="29.5" cy="28" r="11"/><path d="M26 11.5l3.5-4.5 3.5 4.5-3.5 3.5z" stroke-linejoin="round"/></g>
+    </symbol>
+    <symbol id="heart" viewBox="0 0 24 24"><path fill="currentColor" d="M12 20.5s-7.5-4.6-7.5-10.4A4.3 4.3 0 0 1 12 7.4a4.3 4.3 0 0 1 7.5 2.7c0 5.8-7.5 10.4-7.5 10.4z"/></symbol>
+  </defs>
+</svg>
+
+<!-- ============ PREVIEW TOOLBAR (not part of the product) ============ -->
+<div class="pv-toolbar" role="region" aria-label="סרגל תצוגה מקדימה">
+  <span class="pv-title">תצוגה מקדימה של העיצוב<small>הסרגל הזה לא חלק מהאתר</small></span>
+  <div class="pv-group" role="group" aria-label="גודל מסך">
+    <span class="pv-group-label">מסך:</span>
+    <button type="button" class="pv-btn" data-view="desktop" aria-pressed="true">מחשב</button>
+    <button type="button" class="pv-btn" data-view="mobile" aria-pressed="false">מובייל</button>
+  </div>
+  <div class="pv-group" role="group" aria-label="נתוני דוגמה">
+    <span class="pv-group-label">דוגמה:</span>
+    <button type="button" class="pv-btn" data-preset="profit" aria-pressed="true">רווח</button>
+    <button type="button" class="pv-btn" data-preset="loss" aria-pressed="false">הפסד + מינימום ורזרבה</button>
+    <button type="button" class="pv-btn" data-preset="outdated" aria-pressed="false">לא מעודכן</button>
+    <button type="button" class="pv-btn" data-preset="zero" aria-pressed="false">0 מגיעים</button>
+    <button type="button" class="pv-btn" data-preset="empty" aria-pressed="false">ריק</button>
+  </div>
+</div>
+
+<div class="stage" id="stage">
+<div class="device" id="device">
+<div class="app">
+<div class="app-inner">
+
+  <!-- ===================== HERO ===================== -->
+  <header class="hero">
+    <div class="hero-grid">
+      <div class="hero-copy reveal">
+        <p class="hero-eyebrow"><svg aria-hidden="true"><use href="#heart"/></svg>מחשבון תקציב חתונה</p>
+        <h1 class="hero-title">מתחתנים <span class="hl">בראש שקט<svg class="swash" viewBox="0 0 200 16" preserveAspectRatio="none" aria-hidden="true"><path d="M3 11 C 45 3, 105 2, 197 9" /></svg></span></h1>
+        <p class="hero-sub">מתכננים את חתונת החלומות, בלי הפתעות בתקציב.</p>
+        <div class="hero-cta">
+          <a class="btn btn-gold btn-lg" href="#calculator">
+            בואו נחשב את החתונה שלנו
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 5v14M6 13l6 6 6-6"/></svg>
+          </a>
+        </div>
+        <ul class="hero-perks" aria-label="יתרונות">
+          <li><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M5 12.5l4.5 4.5L19 7.5"/></svg>בלי הרשמה</li>
+          <li><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="5" y="11" width="14" height="9" rx="2.5"/><path d="M8 11V8a4 4 0 0 1 8 0v3"/></svg>הנתונים נשארים אצלכם</li>
+          <li><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="12" cy="12" r="8.5"/><path d="M12 7.5V12l3 2"/></svg>שלוש דקות</li>
+        </ul>
+      </div>
+
+      <figure class="hero-photo reveal">
+        <div class="photo-frame">
+          <div class="photo-fallback" aria-hidden="true"><svg width="40" height="40" style="color:var(--gold-500)"><use href="#rings"/></svg>התמונה שלנו</div>
+          <img src="images/couple.png" width="1672" height="941" alt="אנחנו, הזוג שמאחורי האתר, מחובקים ומחייכים מול שקיעה על חוף הים" fetchpriority="high" onerror="this.remove()" style="position:relative" />
+        </div>
+        <svg class="sprig sprig-a" viewBox="0 0 120 120" aria-hidden="true"><use href="#sprig"/></svg>
+        <svg class="sprig sprig-b" viewBox="0 0 120 120" aria-hidden="true"><use href="#sprig"/></svg>
+        <svg class="blossom-a" viewBox="0 0 40 40" aria-hidden="true"><use href="#blossom"/></svg>
+        <figcaption class="love-note"><svg aria-hidden="true"><use href="#heart"/></svg>נבנה באהבה, לקראת החתונה שלנו</figcaption>
+      </figure>
+    </div>
+  </header>
+
+  <!-- ===================== CALCULATOR ===================== -->
+  <div class="section-intro reveal" id="calculator">
+    <div class="ornament" aria-hidden="true"><svg viewBox="0 0 40 40"><use href="#blossom"/></svg></div>
+    <p class="kicker">המחשבון שלנו</p>
+    <h2 class="section-title">כמה תעלה החתונה, וכמה תחזיר?</h2>
+    <p class="section-sub">ממלאים כמה פרטים, והמאזן מתעדכן מיד. אפשר לשנות כל דבר בכל רגע.</p>
+  </div>
+
+  <main class="layout">
+    <div class="col-inputs">
+
+      <!-- 1. Event details -->
+      <section class="card reveal" aria-labelledby="h-event">
+        <div class="card-head">
+          <span class="card-icon" aria-hidden="true"><svg viewBox="0 0 48 48"><use href="#rings"/></svg></span>
+          <div>
+            <p class="card-kicker">שלב 1</p>
+            <h3 id="h-event" class="card-title">האירוע שלכם</h3>
+          </div>
+        </div>
+
+        <fieldset>
+          <legend><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="9" cy="8" r="3.5"/><path d="M2.5 20a6.5 6.5 0 0 1 13 0"/><path d="M16 4.5a3.5 3.5 0 0 1 0 7M18 14a6.5 6.5 0 0 1 3.5 6"/></svg>האורחים</legend>
+          <div class="fields">
+            <div class="field">
+              <label for="f-invited">כמה אורחים מזמינים?</label>
+              <div class="input-wrap"><input id="f-invited" data-key="invited" inputmode="numeric" autocomplete="off" placeholder="למשל 300" /><span class="unit" aria-hidden="true">מוזמנים</span></div>
+              <p class="error" id="f-invited-err" hidden></p>
+            </div>
+            <div class="field">
+              <label for="f-rate">אחוז הגעה צפוי (%)</label>
+              <div class="input-wrap"><input id="f-rate" data-key="rate" inputmode="numeric" autocomplete="off" aria-describedby="f-rate-help" /><span class="unit" aria-hidden="true">%</span></div>
+              <p class="help" id="f-rate-help">85% הוא ערך התחלתי להמחשה בלבד, לא נתון סטטיסטי מבוסס.</p>
+              <p class="error" id="f-rate-err" hidden></p>
+            </div>
+            <p class="computed" id="attending-pill">
+              <span class="computed-icon" aria-hidden="true"><svg viewBox="0 0 24 24"><use href="#heart"/></svg></span>
+              <span>צפויים לחגוג איתכם: <strong id="attending-val">—</strong></span>
+            </p>
+          </div>
+        </fieldset>
+
+        <fieldset>
+          <legend><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M4 11h16a8 8 0 0 1-16 0z"/><path d="M12 7V4M9 7.5 8 5.5M15 7.5l1-2"/><path d="M2.5 19.5h19"/></svg>האולם והמנות</legend>
+          <div class="fields">
+            <div class="field">
+              <label for="f-mealPrice">מחיר למנה (₪)</label>
+              <div class="input-wrap"><input id="f-mealPrice" data-key="mealPrice" inputmode="numeric" autocomplete="off" placeholder="למשל 350" aria-describedby="f-mealPrice-help" /><span class="unit" aria-hidden="true">₪</span></div>
+              <p class="help" id="f-mealPrice-help">כולל מע״מ.</p>
+              <p class="error" id="f-mealPrice-err" hidden></p>
+            </div>
+            <div class="field">
+              <label for="f-minMeals">מינימום מנות מובטח</label>
+              <div class="input-wrap"><input id="f-minMeals" data-key="minMeals" inputmode="numeric" autocomplete="off" placeholder="אין" aria-describedby="f-minMeals-help" /><span class="unit" aria-hidden="true">מנות</span></div>
+              <p class="help" id="f-minMeals-help">אם האולם דורש מספר מנות מינימלי. אחרת השאירו ריק.</p>
+              <p class="error" id="f-minMeals-err" hidden></p>
+            </div>
+            <details class="reserve" id="reserve">
+              <summary>
+                <svg class="chev" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M15 6l-6 6 6 6"/></svg>
+                מנות רזרבה <span class="opt">(אופציונלי)</span>
+              </summary>
+              <div class="reserve-body">
+                <p class="help help-top" id="reserve-help">אם האולם גובה תשלום על מנות רזרבה, הזינו כמה מנות נוספות צפויות להיות מחויבות מעבר למנות הרגילות או המובטחות. אם לא, השאירו ריק.</p>
+                <div class="fields">
+                  <div class="field">
+                    <label for="f-reserveMeals">מנות רזרבה לחיוב</label>
+                    <div class="input-wrap"><input id="f-reserveMeals" data-key="reserveMeals" inputmode="numeric" autocomplete="off" placeholder="0" aria-describedby="reserve-help" /><span class="unit" aria-hidden="true">מנות</span></div>
+                    <p class="error" id="f-reserveMeals-err" hidden></p>
+                  </div>
+                  <div class="field">
+                    <label for="f-reservePrice">מחיר למנת רזרבה (₪)</label>
+                    <div class="input-wrap"><input id="f-reservePrice" data-key="reservePrice" inputmode="numeric" autocomplete="off" placeholder="למשל 200" /><span class="unit" aria-hidden="true">₪</span></div>
+                    <p class="error" id="f-reservePrice-err" hidden></p>
+                  </div>
+                </div>
+              </div>
+            </details>
+          </div>
+        </fieldset>
+
+        <fieldset>
+          <legend><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="3.5" y="9" width="17" height="11.5" rx="2"/><path d="M3.5 13h17M12 9v11.5"/><path d="M12 9c-2-3.5-6-4-6-1.5S10 9 12 9zm0 0c2-3.5 6-4 6-1.5S14 9 12 9z"/></svg>המתנות</legend>
+          <div class="fields">
+            <div class="field">
+              <label for="f-gift">מתנה ממוצעת לאורח מגיע (₪)</label>
+              <div class="input-wrap"><input id="f-gift" data-key="gift" inputmode="numeric" autocomplete="off" placeholder="למשל 450" aria-describedby="f-gift-help" /><span class="unit" aria-hidden="true">₪</span></div>
+              <p class="help" id="f-gift-help">ממוצע לאורח שמגיע, לא לזוג.</p>
+              <p class="error" id="f-gift-err" hidden></p>
+            </div>
+          </div>
+        </fieldset>
+      </section>
+
+      <!-- 2. Expenses -->
+      <section class="card reveal" aria-labelledby="h-expenses">
+        <div class="card-head">
+          <span class="card-icon" aria-hidden="true"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M12 3.5l2.4 4.9 5.4.8-3.9 3.8.9 5.4L12 15.9l-4.8 2.5.9-5.4-3.9-3.8 5.4-.8z"/></svg></span>
+          <div>
+            <p class="card-kicker">שלב 2</p>
+            <h3 id="h-expenses" class="card-title">כל מה שעושה את היום</h3>
+            <p class="card-desc">ערכו, הוסיפו או מחקו. הוצאה לא רלוונטית? השאירו 0.</p>
+          </div>
+        </div>
+        <div class="venue-row">
+          <span class="exp-icon" aria-hidden="true"><svg viewBox="0 0 48 48"><use href="#rings"/></svg></span>
+          <div class="venue-meta">
+            <span class="venue-name">אולם ומנות</span>
+            <span class="badge">מחושב אוטומטית</span>
+            <a class="link-sm" href="#f-mealPrice">שינוי בפרטי האירוע</a>
+          </div>
+          <bdi class="venue-amount" id="venue-amount">—</bdi>
+        </div>
+        <ul class="exp-list" id="exp-list" aria-label="הוצאות נוספות"></ul>
+        <div class="exp-empty" id="exp-empty" hidden>
+          <strong>עוד אין הוצאות נוספות</strong>
+          הוסיפו צלם, די-ג׳יי, שמלה או כל דבר אחר שחשוב לכם.
+        </div>
+        <div class="exp-actions">
+          <button type="button" class="btn btn-dashed" id="add-expense">
+            <span class="plus" aria-hidden="true"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round"><path d="M12 5v14M5 12h14"/></svg></span>
+            הוספת הוצאה
+          </button>
+        </div>
+        <div class="exp-footer">
+          <span class="subtotal-label">סה״כ הוצאות נוספות</span>
+          <bdi class="subtotal-value" id="exp-subtotal">—</bdi>
+        </div>
+      </section>
+    </div>
+
+    <!-- Summary -->
+    <aside class="col-summary" id="summary" aria-labelledby="h-summary">
+      <div class="card summary-card reveal">
+        <svg class="blossom-deco" viewBox="0 0 40 40" aria-hidden="true"><use href="#blossom"/></svg>
+        <div class="summary-head">
+          <h3 id="h-summary" class="card-title">המאזן שלכם</h3>
+          <span class="live-dot">מתעדכן בזמן אמת</span>
+        </div>
+
+        <div class="alert alert-warn alert-first" id="sum-alert" hidden>
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 3l9.5 17h-19z"/><path d="M12 10v4.5M12 17.5v.01"/></svg>
+          <div>
+            <strong id="sum-alert-title"></strong>
+            <p id="sum-alert-text"></p>
+            <button type="button" class="link-btn" id="sum-alert-link">מעבר לשדה הראשון לתיקון</button>
+          </div>
+        </div>
+
+        <div class="summary-empty" id="sum-empty" hidden>
+          <div class="empty-art" aria-hidden="true"><svg viewBox="0 0 48 48"><use href="#rings"/></svg></div>
+          <h4>הסיפור שלכם מתחיל כאן</h4>
+          <p>מלאו כמה פרטים, והמאזן יופיע כאן.</p>
+          <ol class="empty-steps">
+            <li>כמה אורחים מזמינים</li>
+            <li>מחיר למנה</li>
+            <li>מתנה ממוצעת לאורח</li>
+          </ol>
+        </div>
+
+        <div id="sum-content">
+          <div class="balance tone-profit" id="balance">
+            <div class="balance-top">
+              <span class="status-icon" id="bal-icon" aria-hidden="true"></span>
+              <span class="balance-label" id="bal-label"></span>
+              <span class="badge badge-warn" id="bal-stale" hidden>לא מעודכן</span>
+            </div>
+            <bdi class="balance-amount" id="bal-amount"></bdi>
+            <p class="balance-note" id="bal-note"></p>
+          </div>
+
+          <div class="compare">
+            <div>
+              <div class="cmp-top"><span>סך ההוצאות</span><bdi id="r-total"></bdi></div>
+              <div class="cmp-track" aria-hidden="true"><span class="cmp-bar bar-exp" id="b-exp"></span></div>
+            </div>
+            <div>
+              <div class="cmp-top"><span>מתנות צפויות<small id="r-gifts-sub"></small></span><bdi id="r-gifts"></bdi></div>
+              <div class="cmp-track" aria-hidden="true"><span class="cmp-bar bar-gift" id="b-gift"></span></div>
+            </div>
+          </div>
+
+          <p class="mini-title">פירוט ההוצאות</p>
+          <dl class="breakdown">
+            <div class="bd-row"><dt>אולם ומנות<span class="bd-sub" id="r-venue-sub"></span></dt><dd><bdi id="r-venue"></bdi></dd></div>
+            <div class="bd-row"><dt>הוצאות נוספות</dt><dd><bdi id="r-add"></bdi></dd></div>
+          </dl>
+
+          <div class="alert alert-info" id="sum-unused" hidden>
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" aria-hidden="true"><circle cx="12" cy="12" r="9"/><path d="M12 11v5M12 8v.01"/></svg>
+            <p id="sum-unused-text"></p>
+          </div>
+
+          <div class="metrics">
+            <div class="metric">
+              <div class="metric-head"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="3.5" y="9" width="17" height="11.5" rx="2"/><path d="M3.5 13h17M12 9v11.5"/><path d="M12 9c-2-3.5-6-4-6-1.5S10 9 12 9zm0 0c2-3.5 6-4 6-1.5S14 9 12 9z"/></svg><p class="metric-label">עלות לאורח מגיע</p></div>
+              <bdi class="metric-value" id="m-cpg"></bdi>
+              <p class="metric-sub">= המתנה הממוצעת הדרושה לאיזון</p>
+              <p class="metric-cmp" id="m-cpg-cmp"></p>
+            </div>
+            <div class="metric">
+              <div class="metric-head"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M4 11h16a8 8 0 0 1-16 0z"/><path d="M12 7V4"/><path d="M2.5 19.5h19"/></svg><p class="metric-label">מחיר מנה מקסימלי לאיזון</p></div>
+              <bdi class="metric-value" id="m-bemp"></bdi>
+              <p class="metric-sub" id="m-bemp-sub"></p>
+            </div>
+          </div>
+          <p class="disclaimer">הערכה בלבד · כל המחירים כוללים מע״מ</p>
+        </div>
+      </div>
+    </aside>
+  </main>
+
+  <!-- 3. What-if -->
+  <section class="card whatif reveal" id="whatif" aria-labelledby="h-whatif">
+    <svg class="sprig" viewBox="0 0 120 120" aria-hidden="true"><use href="#sprig"/></svg>
+    <div class="card-head">
+      <span class="card-icon" aria-hidden="true"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M12 3v3M12 18v3M3 12h3M18 12h3M5.6 5.6l2.1 2.1M16.3 16.3l2.1 2.1M5.6 18.4l2.1-2.1M16.3 7.7l2.1-2.1"/></svg></span>
+      <div>
+        <p class="card-kicker">שלב 3</p>
+        <h3 id="h-whatif" class="card-title">ומה אם...?</h3>
+        <p class="card-desc">הזיזו את הסליידרים כדי לבחון תרחישים. הנתונים שהזנתם לא ישתנו.</p>
+      </div>
+    </div>
+    <div class="alert alert-info alert-first" id="w-disabled" hidden>
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" aria-hidden="true"><circle cx="12" cy="12" r="9"/><path d="M12 11v5M12 8v.01"/></svg>
+      <p id="w-disabled-text"></p>
+    </div>
+    <div class="sliders">
+      <div class="slider-field">
+        <div class="slider-top"><label for="s-meal"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M4 11h16a8 8 0 0 1-16 0z"/><path d="M12 7V4"/><path d="M2.5 19.5h19"/></svg>המנה מתייקרת?</label><output id="o-meal" for="s-meal" dir="ltr">0%</output></div>
+        <input type="range" id="s-meal" min="-30" max="30" step="5" value="0" dir="ltr" aria-describedby="h-meal" />
+        <div class="slider-scale" dir="ltr" aria-hidden="true"><span>−30%</span><span>0</span><span>+30%</span></div>
+        <p class="slider-hint" id="h-meal"></p>
+      </div>
+      <div class="slider-field">
+        <div class="slider-top"><label for="s-rate"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="9" cy="8" r="3.5"/><path d="M2.5 20a6.5 6.5 0 0 1 13 0"/><path d="M16 4.5a3.5 3.5 0 0 1 0 7M18 14a6.5 6.5 0 0 1 3.5 6"/></svg>פחות אורחים מגיעים?</label><output id="o-rate" for="s-rate" dir="ltr">85%</output></div>
+        <input type="range" id="s-rate" min="50" max="100" step="1" value="85" dir="ltr" aria-describedby="h-rate" />
+        <div class="slider-scale" dir="ltr" aria-hidden="true"><span>50%</span><span>75%</span><span>100%</span></div>
+        <p class="slider-hint" id="h-rate"></p>
+      </div>
+      <div class="slider-field">
+        <div class="slider-top"><label for="s-gift"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="3.5" y="9" width="17" height="11.5" rx="2"/><path d="M3.5 13h17M12 9v11.5"/><path d="M12 9c-2-3.5-6-4-6-1.5S10 9 12 9zm0 0c2-3.5 6-4 6-1.5S14 9 12 9z"/></svg>המתנות משתנות?</label><output id="o-gift" for="s-gift" dir="ltr">0%</output></div>
+        <input type="range" id="s-gift" min="-30" max="30" step="5" value="0" dir="ltr" aria-describedby="h-gift" />
+        <div class="slider-scale" dir="ltr" aria-hidden="true"><span>−30%</span><span>0</span><span>+30%</span></div>
+        <p class="slider-hint" id="h-gift"></p>
+      </div>
+    </div>
+    <div class="whatif-results">
+      <div class="w-tile tone-even" id="w-scn">
+        <p class="w-label">המאזן בתרחיש</p>
+        <div class="w-value" id="w-scn-value">—</div>
+      </div>
+      <div class="w-tile tone-even" id="w-diff">
+        <p class="w-label">לעומת המצב הנוכחי</p>
+        <div class="w-value" id="w-diff-value">—</div>
+      </div>
+      <button type="button" class="btn btn-ghost" id="w-reset">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M20 12a8 8 0 1 1-2.3-5.6"/><path d="M20 4v5h-5"/></svg>
+        איפוס תרחיש
+      </button>
+    </div>
+  </section>
+
+  <!-- Footer -->
+  <footer class="site-footer">
+    <div class="ornament" aria-hidden="true"><svg viewBox="0 0 48 48" style="color:var(--gold-500)"><use href="#rings"/></svg></div>
+    <p class="footer-sign"><svg aria-hidden="true"><use href="#heart"/></svg>נבנה באהבה, לקראת החתונה שלנו</p>
+    <p>התוצאות הן הערכה בלבד ואינן מהוות ייעוץ פיננסי. כל המחירים כוללים מע״מ.<br />הנתונים נשמרים רק בדפדפן שלכם ולא נשלחים לשום שרת.</p>
+    <button type="button" class="btn btn-ghost" id="reset-all">התחל מחדש</button>
+  </footer>
+</div><!-- /app-inner -->
+
+<!-- Dock: toast + mobile bar -->
+<div class="dock">
+  <div class="toast" id="toast" hidden>
+    <span class="toast-msg" id="toast-msg"></span>
+    <button type="button" class="toast-undo" id="toast-undo">ביטול</button>
+    <button type="button" class="toast-close" id="toast-close" aria-label="סגירת ההודעה">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" aria-hidden="true"><path d="M6 6l12 12M18 6L6 18"/></svg>
+    </button>
+    <span class="toast-progress" aria-hidden="true"></span>
+  </div>
+  <a class="mobile-bar tone-profit" id="mobile-bar" href="#summary">
+    <span class="mb-status">
+      <span class="mb-icon" id="mb-icon" aria-hidden="true"></span>
+      <span class="mb-text">
+        <span class="mb-label"><span id="mb-label"></span><span class="badge badge-warn" id="mb-stale" hidden>לא מעודכן</span></span>
+        <bdi class="mb-amount" id="mb-amount"></bdi>
+      </span>
+    </span>
+    <span class="mb-cta">למאזן<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 5v14M6 13l6 6 6-6"/></svg></span>
+  </a>
+</div>
+</div><!-- /app -->
+</div><!-- /device -->
+</div><!-- /stage -->
+
+<div class="sr-only" aria-live="polite" id="live"></div>
+
+<script>
+/* =====================================================================
+   PROTOTYPE-ONLY LOGIC. Not production code: the real, tested
+   calculation module is written in Phase 5. Mirrors the approved spec.
+   ===================================================================== */
+(() => {
+  const $ = (s, el = document) => el.querySelector(s);
+  const $$ = (s, el = document) => [...el.querySelectorAll(s)];
+  const reducedMotion = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+
+  const curFmt = new Intl.NumberFormat('he-IL', { style: 'currency', currency: 'ILS', maximumFractionDigits: 0 });
+  const numFmt = new Intl.NumberFormat('he-IL', { maximumFractionDigits: 0 });
+  const money = (n) => curFmt.format(n);
+  const num = (n) => numFmt.format(n);
+  const esc = (s) => String(s).replace(/[&<>"']/g, (c) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]));
+
+  const svg = (d, w = 1.8) => `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="${w}" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">${d}</svg>`;
+  const ICON = {
+    up: svg('<path d="M12 19V5M5.5 11.5L12 5l6.5 6.5"/>', 2.4),
+    down: svg('<path d="M12 5v14M5.5 12.5L12 19l6.5-6.5"/>', 2.4),
+    even: svg('<path d="M6 9.5h12M6 14.5h12"/>', 2.4),
+    alert: svg('<circle cx="12" cy="12" r="9"/><path d="M12 7.5v5.5M12 16.5v.01"/>', 2),
+    trash: svg('<path d="M4 7h16M10 11v6M14 11v6M6 7l1 12a2 2 0 0 0 2 2h6a2 2 0 0 0 2-2l1-12M9 7V4h6v3"/>'),
+    music: svg('<path d="M9 18V5l11-2v13"/><circle cx="6" cy="18" r="3"/><circle cx="17" cy="16" r="3"/>'),
+    camera: svg('<path d="M3 8.5A2.5 2.5 0 0 1 5.5 6h2l1.5-2h6l1.5 2h2A2.5 2.5 0 0 1 21 8.5v9a2.5 2.5 0 0 1-2.5 2.5h-13A2.5 2.5 0 0 1 3 17.5z"/><circle cx="12" cy="13" r="3.8"/>'),
+    dress: svg('<path d="M9 3l1.5 4h3L15 3"/><path d="M10.5 7 9 11l-4.5 10h15L15 11l-1.5-4"/><path d="M9 11h6"/>'),
+    flower: svg('<circle cx="12" cy="9" r="2.2"/><path d="M12 6.8c0-3 3.6-3 3.6-.6 0 1.7-2 2.6-3.6 2.8M12 6.8c0-3-3.6-3-3.6-.6 0 1.7 2 2.6 3.6 2.8M14.2 9c2.6.6 2.6 4-.2 4-1.5 0-2-1.6-2-1.8M9.8 9c-2.6.6-2.6 4 .2 4 1.5 0 2-1.6 2-1.8"/><path d="M12 13.5V21M12 18c-2-2.5-4.5-2.5-5.5-1.5M12 17c1.5-2 4-2.3 5-1.3"/>'),
+    mail: svg('<rect x="3" y="5.5" width="18" height="13" rx="2.5"/><path d="m4 7 8 6 8-6"/>'),
+    car: svg('<path d="M5 16.5V12l2-5h10l2 5v4.5"/><path d="M3.5 12h17v4.5h-17z"/><circle cx="7.5" cy="17.5" r="1.6"/><circle cx="16.5" cy="17.5" r="1.6"/>'),
+    sparkle: svg('<path d="M12 3.5l2.4 4.9 5.4.8-3.9 3.8.9 5.4L12 15.9l-4.8 2.5.9-5.4-3.9-3.8 5.4-.8z"/>'),
+  };
+  const iconFor = (name) => {
+    const n = name.toLowerCase();
+    if (/די.?ג|dj|מוזיק|להק|זמר/.test(n)) return ICON.music;
+    if (/צלם|צילום|וידאו|מגנט|סטילס/.test(n)) return ICON.camera;
+    if (/שמל|חליפ|איפור|שיער|תכשיט/.test(n)) return ICON.dress;
+    if (/פרח|עיצוב|זר|קישוט/.test(n)) return ICON.flower;
+    if (/הזמנ|דפוס/.test(n)) return ICON.mail;
+    if (/הסע|רכב|אוטובוס|נסיע/.test(n)) return ICON.car;
+    return ICON.sparkle;
+  };
+
+  // ---------- Field rules ----------
+  const MAX_COUNT = 5000, MAX_MONEY = 10_000_000;
+  const RULES = {
+    invited:      { max: MAX_COUNT, maxMsg: 'המספר המקסימלי הוא 5,000' },
+    rate:         { max: 100,       maxMsg: 'אחוז ההגעה צריך להיות בין 0 ל-100' },
+    mealPrice:    { max: MAX_MONEY, maxMsg: 'הסכום המקסימלי הוא ₪10,000,000' },
+    minMeals:     { max: MAX_COUNT, maxMsg: 'המספר המקסימלי הוא 5,000' },
+    reserveMeals: { max: MAX_COUNT, maxMsg: 'המספר המקסימלי הוא 5,000' },
+    reservePrice: { max: MAX_MONEY, maxMsg: 'הסכום המקסימלי הוא ₪10,000,000' },
+    gift:         { max: MAX_MONEY, maxMsg: 'הסכום המקסימלי הוא ₪10,000,000' },
+  };
+  const NO_FORMAT = new Set(['rate']);
+
+  function parseWhole(raw) {
+    const s = String(raw ?? '').replace(/[,\s]/g, '');
+    if (s === '') return { v: 0 };
+    if (!/^\d+$/.test(s)) return { err: 'יש להזין מספר שלם (ספרות בלבד)' };
+    return { v: Number(s) };
+  }
+
+  // ---------- Presets ----------
+  let idSeq = 0;
+  const nid = () => `e${Date.now().toString(36)}${idSeq++}`;
+  const baseExpenses = (a) => [
+    { id: nid(), name: 'די-ג׳יי', amount: a[0] },
+    { id: nid(), name: 'צלם', amount: a[1] },
+    { id: nid(), name: 'שמלת כלה', amount: a[2] },
+  ];
+  const withFlowers = () => [...baseExpenses(['6,000', '9,000', '8,000']), { id: nid(), name: 'עיצוב ופרחים', amount: '7,000' }];
+  const PRESETS = {
+    profit: () => ({ event: { invited: '300', rate: '85', mealPrice: '350', minMeals: '250', reserveMeals: '', reservePrice: '', gift: '505' }, expenses: withFlowers() }),
+    loss:   () => ({ event: { invited: '300', rate: '70', mealPrice: '380', minMeals: '250', reserveMeals: '10', reservePrice: '200', gift: '450' }, expenses: withFlowers() }),
+    zero:   () => ({ event: { invited: '0', rate: '85', mealPrice: '350', minMeals: '250', reserveMeals: '', reservePrice: '', gift: '450' }, expenses: withFlowers() }),
+    empty:  () => ({ event: { invited: '', rate: '85', mealPrice: '', minMeals: '', reserveMeals: '', reservePrice: '', gift: '' }, expenses: baseExpenses(['', '', '']) }),
+  };
+
+  // ---------- State ----------
+  let state = PRESETS.profit();
+  let lastValid = null;
+  let rateTouched = false;
+  let pendingUndo = null, toastTimer = null;
+
+  // ---------- Validation ----------
+  function parseBudget(st) {
+    const errors = { event: {}, expenses: {} };
+    let count = 0;
+    const v = {};
+    for (const [k, rule] of Object.entries(RULES)) {
+      const r = parseWhole(st.event[k]);
+      if (r.err) { errors.event[k] = r.err; count++; continue; }
+      if (r.v > rule.max) { errors.event[k] = rule.maxMsg; count++; continue; }
+      v[k] = r.v;
+    }
+    if (!('reserveMeals' in errors.event) && !('reservePrice' in errors.event) && v.reserveMeals > 0 && v.reservePrice === 0) {
+      errors.event.reservePrice = 'יש להזין מחיר למנת רזרבה'; count++;
+    }
+    v.expenses = [];
+    for (const e of st.expenses) {
+      const r = parseWhole(e.amount);
+      const err = {};
+      if (r.err) err.amount = r.err;
+      else if (r.v > MAX_MONEY) err.amount = 'הסכום המקסימלי הוא ₪10,000,000';
+      if (!err.amount && r.v > 0 && e.name.trim() === '') err.name = 'יש להזין שם להוצאה';
+      if (err.amount || err.name) { errors.expenses[e.id] = err; count += (err.amount ? 1 : 0) + (err.name ? 1 : 0); }
+      v.expenses.push({ id: e.id, name: e.name, amount: err.amount ? 0 : r.v });
+    }
+    let isEmpty = false;
+    if (count === 0) isEmpty = v.invited === 0 && calculate(v).totalCost === 0;
+    return { values: count === 0 ? v : null, partial: v, errors, count, isEmpty };
+  }
+
+  // ---------- Calculation ----------
+  function calculate(v) {
+    const attendingGuests = Math.round((v.invited * v.rate) / 100);
+    const mainMeals = Math.max(attendingGuests, v.minMeals);
+    const unusedMeals = mainMeals - attendingGuests;
+    const mealsCost = mainMeals * v.mealPrice;
+    const reserveCost = v.reserveMeals * v.reservePrice;
+    const venueCost = mealsCost + reserveCost;
+    const additionalCost = v.expenses.reduce((s, e) => s + e.amount, 0);
+    const totalCost = venueCost + additionalCost;
+    const giftIncome = attendingGuests * v.gift;
+    const balance = giftIncome - totalCost;
+    const balanceStatus = balance > 0 ? 'profit' : balance < 0 ? 'loss' : 'even';
+    const breakEvenGift = attendingGuests > 0 ? Math.ceil(totalCost / attendingGuests) : null;
+    let breakEvenMealPrice;
+    if (mainMeals === 0) breakEvenMealPrice = { status: 'not-applicable' };
+    else {
+      const available = giftIncome - additionalCost - reserveCost;
+      breakEvenMealPrice = available < 0 ? { status: 'impossible', shortfall: -available } : { status: 'ok', value: Math.floor(available / mainMeals) };
+    }
+    return { attendingGuests, mainMeals, unusedMeals, mealsCost, reserveCost, venueCost, additionalCost, totalCost, giftIncome, balance, balanceStatus, breakEvenGift, breakEvenMealPrice };
+  }
+
+  // Meal % applies to BOTH regular and reserve meal prices (approved rule).
+  function applyScenario(v, adj) {
+    return {
+      ...v,
+      mealPrice: Math.round(v.mealPrice * (1 + adj.mealPct / 100)),
+      reservePrice: Math.round(v.reservePrice * (1 + adj.mealPct / 100)),
+      rate: adj.rate,
+      gift: Math.round(v.gift * (1 + adj.giftPct / 100)),
+    };
+  }
+
+  const STATUS = {
+    profit: { label: 'רווח צפוי', icon: ICON.up },
+    loss: { label: 'הפסד צפוי', icon: ICON.down },
+    even: { label: 'מאוזן', icon: ICON.even },
+  };
+  const setTone = (el, tone) => { el.classList.remove('tone-profit', 'tone-loss', 'tone-even', 'tone-stale'); el.classList.add(`tone-${tone}`); };
+  const fieldsWord = (n) => (n === 1 ? 'שדה אחד' : `${n} שדות`);
+
+  // ---------- Animated money values ----------
+  function tweenMoney(el, to) {
+    const from = typeof el._v === 'number' ? el._v : 0;
+    el._v = to;
+    cancelAnimationFrame(el._raf);
+    if (reducedMotion || from === to) { el.textContent = money(to); return; }
+    const start = performance.now(), dur = 650;
+    const step = (now) => {
+      const t = Math.min(1, (now - start) / dur);
+      const e = 1 - Math.pow(1 - t, 3);
+      el.textContent = money(Math.round(from + (to - from) * e));
+      if (t < 1) el._raf = requestAnimationFrame(step);
+    };
+    el._raf = requestAnimationFrame(step);
+  }
+  const setText = (el, text) => { cancelAnimationFrame(el._raf); el._v = undefined; el.textContent = text; };
+
+  // ---------- DOM refs ----------
+  const eventInputs = $$('input[data-key]');
+  const list = $('#exp-list');
+  const addBtn = $('#add-expense');
+  const sMeal = $('#s-meal'), sRate = $('#s-rate'), sGift = $('#s-gift');
+
+  // ---------- Rendering ----------
+  function fillInputs() {
+    for (const input of eventInputs) input.value = state.event[input.dataset.key];
+    $('#reserve').open = Boolean(state.event.reserveMeals || state.event.reservePrice);
+    renderExpenses();
+  }
+
+  function renderExpenses(newId) {
+    list.innerHTML = state.expenses.map((e) => {
+      const label = e.name.trim() || 'ללא שם';
+      return `
+      <li class="exp-row${e.id === newId ? ' is-new' : ''}" data-id="${e.id}">
+        <span class="exp-icon" aria-hidden="true">${iconFor(e.name)}</span>
+        <div class="exp-name">
+          <div class="input-wrap"><input type="text" data-role="name" id="n-${e.id}" value="${esc(e.name)}" maxlength="60" placeholder="למשל: עיצוב ופרחים" aria-label="שם ההוצאה" autocomplete="off" /></div>
+          <p class="error" id="n-${e.id}-err" hidden></p>
+        </div>
+        <div class="exp-amount">
+          <div class="input-wrap"><input data-role="amount" id="a-${e.id}" value="${esc(e.amount)}" inputmode="numeric" placeholder="0" aria-label="סכום עבור ${esc(label)} (₪)" autocomplete="off" /><span class="unit" aria-hidden="true">₪</span></div>
+          <p class="error" id="a-${e.id}-err" hidden></p>
+        </div>
+        <button type="button" class="icon-btn danger exp-del" data-role="delete" aria-label="מחיקת ההוצאה ${esc(label)}">${ICON.trash}</button>
+      </li>`;
+    }).join('');
+    $('#exp-empty').hidden = state.expenses.length > 0;
+  }
+
+  function setFieldError(input, errEl, msg, helpId) {
+    const wrap = input.closest('.input-wrap');
+    const describedBy = [helpId, msg ? errEl.id : null].filter(Boolean).join(' ');
+    if (describedBy) input.setAttribute('aria-describedby', describedBy); else input.removeAttribute('aria-describedby');
+    if (msg) {
+      input.setAttribute('aria-invalid', 'true');
+      wrap.classList.add('is-invalid');
+      errEl.innerHTML = `${ICON.alert}<span>${esc(msg)}</span>`;
+      errEl.hidden = false;
+    } else {
+      input.removeAttribute('aria-invalid');
+      wrap.classList.remove('is-invalid');
+      errEl.hidden = true;
+    }
+  }
+
+  function renderErrors(p) {
+    const HELP = { rate: 'f-rate-help', mealPrice: 'f-mealPrice-help', minMeals: 'f-minMeals-help', gift: 'f-gift-help', reserveMeals: 'reserve-help' };
+    for (const input of eventInputs) {
+      const k = input.dataset.key;
+      setFieldError(input, $(`#${input.id}-err`), p.errors.event[k], HELP[k]);
+    }
+    if (p.errors.event.reserveMeals || p.errors.event.reservePrice) $('#reserve').open = true;
+    for (const e of state.expenses) {
+      const err = p.errors.expenses[e.id] || {};
+      const n = $(`#n-${e.id}`), a = $(`#a-${e.id}`);
+      if (n) setFieldError(n, $(`#n-${e.id}-err`), err.name);
+      if (a) setFieldError(a, $(`#a-${e.id}-err`), err.amount);
+    }
+  }
+
+  function renderInline(p) {
+    const ev = p.errors.event, v = p.partial;
+    $('#attending-val').textContent = !ev.invited && !ev.rate ? `≈ ${num(Math.round((v.invited * v.rate) / 100))} אורחים` : '—';
+    const venueEl = $('#venue-amount');
+    if (p.values) tweenMoney(venueEl, calculate(p.values).venueCost); else setText(venueEl, '—');
+    const subEl = $('#exp-subtotal');
+    if (Object.keys(p.errors.expenses).length) setText(subEl, '—'); else tweenMoney(subEl, v.expenses.reduce((s, e) => s + e.amount, 0));
+  }
+
+  let liveTimer = null;
+  function announce(text, delay = 700) {
+    clearTimeout(liveTimer);
+    liveTimer = setTimeout(() => { $('#live').textContent = text; }, delay);
+  }
+
+  let lastTone = null;
+  function renderSummary(p) {
+    const hasErr = p.count > 0;
+    let vals = null, stale = false;
+    if (hasErr) { if (lastValid) { vals = lastValid; stale = true; } }
+    else if (!p.isEmpty) vals = p.values;
+
+    $('#sum-alert').hidden = !hasErr;
+    if (hasErr) {
+      $('#sum-alert-title').textContent = lastValid ? 'התוצאות לא מעודכנות' : 'יש לתקן את השדות המסומנים';
+      $('#sum-alert-text').textContent = lastValid
+        ? `מוצג החישוב האחרון התקין. יש לתקן ${fieldsWord(p.count)} כדי לעדכן אותו.`
+        : `כדי לראות תוצאה יש לתקן ${fieldsWord(p.count)}.`;
+    }
+    $('#sum-empty').hidden = !(!hasErr && p.isEmpty);
+    const content = $('#sum-content');
+    content.hidden = !vals;
+    content.classList.toggle('is-stale', stale);
+
+    const bar = $('#mobile-bar');
+    if (!vals) {
+      setTone(bar, 'even');
+      $('#mb-icon').innerHTML = hasErr ? ICON.alert : ICON.even;
+      $('#mb-label').textContent = hasErr ? 'יש לתקן שדות' : 'עוד אין חישוב';
+      setText($('#mb-amount'), hasErr ? '' : 'הזינו פרטים');
+      $('#mb-stale').hidden = true;
+      lastTone = null;
+      announce(hasErr ? 'יש לתקן את השדות המסומנים' : '');
+      return;
+    }
+
+    const r = calculate(vals);
+    const st = STATUS[r.balanceStatus];
+    const tone = stale ? 'stale' : r.balanceStatus;
+    const balEl = $('#balance');
+    setTone(balEl, tone);
+    if (lastTone && lastTone !== tone) { balEl.classList.remove('pop'); void balEl.offsetWidth; balEl.classList.add('pop'); }
+    lastTone = tone;
+    $('#bal-icon').innerHTML = st.icon;
+    $('#bal-label').textContent = st.label;
+    $('#bal-stale').hidden = !stale;
+    tweenMoney($('#bal-amount'), Math.abs(r.balance));
+    $('#bal-note').textContent =
+      r.attendingGuests === 0
+        ? (r.totalCost > 0 ? 'אין אורחים מגיעים, ולכן אין הכנסה ממתנות. ההפסד הוא סך כל ההוצאות.' : 'אין אורחים מגיעים ואין הוצאות.')
+        : r.balanceStatus === 'profit' ? 'המתנות צפויות לכסות את כל ההוצאות, ועוד יישאר לכם.'
+        : r.balanceStatus === 'loss' ? 'ההוצאות צפויות לעבור את המתנות. כדאי לבחון תרחישים למטה.'
+        : 'המתנות צפויות לכסות בדיוק את ההוצאות.';
+
+    const maxBar = Math.max(r.totalCost, r.giftIncome);
+    $('#b-exp').style.width = maxBar ? `${(r.totalCost / maxBar) * 100}%` : '0';
+    $('#b-gift').style.width = maxBar ? `${(r.giftIncome / maxBar) * 100}%` : '0';
+    tweenMoney($('#r-total'), r.totalCost);
+    tweenMoney($('#r-gifts'), r.giftIncome);
+    $('#r-gifts-sub').textContent = `${num(r.attendingGuests)} אורחים × ${money(vals.gift)}`;
+
+    let venueSub = `${num(r.mainMeals)} מנות × ${money(vals.mealPrice)}`;
+    if (vals.reserveMeals > 0) venueSub += ` + ${num(vals.reserveMeals)} רזרבה × ${money(vals.reservePrice)}`;
+    $('#r-venue-sub').textContent = venueSub;
+    tweenMoney($('#r-venue'), r.venueCost);
+    tweenMoney($('#r-add'), r.additionalCost);
+
+    $('#sum-unused').hidden = r.unusedMeals <= 0;
+    if (r.unusedMeals > 0) $('#sum-unused-text').textContent = `בגלל מינימום המנות תשלמו על ${num(r.unusedMeals)} מנות שלא ינוצלו (${money(r.unusedMeals * vals.mealPrice)}).`;
+
+    const cpg = $('#m-cpg'), cmp = $('#m-cpg-cmp');
+    if (r.breakEvenGift === null) {
+      setText(cpg, '—');
+      cmp.className = 'metric-cmp'; cmp.textContent = 'אין אורחים מגיעים, ולכן אי אפשר לחשב עלות לאורח.';
+    } else {
+      tweenMoney(cpg, r.breakEvenGift);
+      const d = vals.gift - r.breakEvenGift;
+      if (d > 0) { cmp.className = 'metric-cmp cmp-pos'; cmp.innerHTML = `${ICON.up}<span>המתנה שהזנתם גבוהה ב-<bdi>${money(d)}</bdi> מנקודת האיזון</span>`; }
+      else if (d < 0) { cmp.className = 'metric-cmp cmp-neg'; cmp.innerHTML = `${ICON.down}<span>חסרים <bdi>${money(-d)}</bdi> לאורח כדי להגיע לאיזון</span>`; }
+      else { cmp.className = 'metric-cmp'; cmp.innerHTML = `${ICON.even}<span>המתנה שהזנתם בדיוק בנקודת האיזון</span>`; }
+    }
+
+    const be = r.breakEvenMealPrice, bemp = $('#m-bemp'), bempSub = $('#m-bemp-sub');
+    if (be.status === 'ok') {
+      bemp.classList.remove('is-text'); tweenMoney(bemp, be.value);
+      bempSub.textContent = vals.mealPrice <= be.value ? `המחיר הנוכחי (${money(vals.mealPrice)}) בטווח.` : `המחיר הנוכחי (${money(vals.mealPrice)}) גבוה ממנו.`;
+    } else if (be.status === 'impossible') {
+      bemp.classList.add('is-text'); setText(bemp, 'אין מחיר איזון');
+      bempSub.textContent = `גם אם המנה תהיה בחינם, ההוצאות האחרות גבוהות מהכנסות המתנות ב-${money(be.shortfall)}.`;
+    } else {
+      bemp.classList.remove('is-text'); setText(bemp, '—');
+      bempSub.textContent = 'אין מנות לחיוב.';
+    }
+
+    setTone(bar, tone);
+    $('#mb-icon').innerHTML = st.icon;
+    $('#mb-label').textContent = st.label;
+    tweenMoney($('#mb-amount'), Math.abs(r.balance));
+    $('#mb-stale').hidden = !stale;
+    announce(`${st.label} ${num(Math.abs(r.balance))} שקלים${stale ? ', לא מעודכן' : ''}`);
+  }
+
+  function setFill(input, centered) {
+    const min = +input.min, max = +input.max, val = +input.value;
+    const pos = ((val - min) / (max - min)) * 100;
+    const track = 'rgb(210 193 172 / .45)';
+    const [a, b] = centered ? [Math.min(50, pos), Math.max(50, pos)] : [0, pos];
+    input.style.setProperty('--fill', `linear-gradient(to right, ${track} ${a}%, #D9B77E ${a}%, #C98A8F ${b}%, ${track} ${b}%)`);
+  }
+  const pctText = (v) => (v === 0 ? '0%' : `${v > 0 ? '+' : '−'}${Math.abs(v)}%`);
+  const pctVoice = (v, what) => (v === 0 ? `ללא שינוי ב${what}` : `${v > 0 ? 'עלייה' : 'ירידה'} של ${Math.abs(v)} אחוזים ב${what}`);
+
+  function renderWhatIf(p) {
+    const enabled = p.count === 0 && !p.isEmpty;
+    $('#whatif').classList.toggle('is-disabled', !enabled);
+    for (const s of [sMeal, sRate, sGift]) s.disabled = !enabled;
+    $('#w-reset').disabled = !enabled;
+    $('#w-disabled').hidden = enabled;
+    $('#w-disabled-text').textContent = p.count > 0 ? 'יש לתקן את השדות המסומנים כדי לבחון תרחישים.' : 'הזינו פרטי אירוע כדי לבחון תרחישים.';
+
+    const base = p.values || lastValid;
+    if (base && !rateTouched) sRate.value = Math.min(100, Math.max(50, base.rate));
+
+    const adj = { mealPct: +sMeal.value, rate: +sRate.value, giftPct: +sGift.value };
+    $('#o-meal').textContent = pctText(adj.mealPct);
+    $('#o-rate').textContent = `${adj.rate}%`;
+    $('#o-gift').textContent = pctText(adj.giftPct);
+    sMeal.setAttribute('aria-valuetext', pctVoice(adj.mealPct, 'מחיר המנה'));
+    sRate.setAttribute('aria-valuetext', `${adj.rate} אחוזי הגעה`);
+    sGift.setAttribute('aria-valuetext', pctVoice(adj.giftPct, 'מתנה הממוצעת'));
+    setFill(sMeal, true); setFill(sRate, false); setFill(sGift, true);
+
+    if (!enabled || !base) {
+      $('#h-meal').textContent = ''; $('#h-rate').textContent = ''; $('#h-gift').textContent = '';
+      setTone($('#w-scn'), 'even'); setTone($('#w-diff'), 'even');
+      $('#w-scn-value').textContent = '—'; $('#w-diff-value').textContent = '—';
+      return;
+    }
+    const sv = applyScenario(base, adj);
+    const rb = calculate(base), rs = calculate(sv);
+    $('#h-meal').textContent = `מחיר מנה בתרחיש: ${money(sv.mealPrice)}` + (sv.reserveMeals > 0 ? ` · רזרבה: ${money(sv.reservePrice)}` : '');
+    $('#h-rate').textContent = `≈ ${num(rs.attendingGuests)} אורחים מגיעים (מתוך ${num(base.invited)})`;
+    $('#h-gift').textContent = `מתנה ממוצעת בתרחיש: ${money(sv.gift)}`;
+
+    const st = STATUS[rs.balanceStatus];
+    setTone($('#w-scn'), rs.balanceStatus);
+    $('#w-scn-value').innerHTML = `${st.icon}<span>${st.label}</span><bdi>${money(Math.abs(rs.balance))}</bdi>`;
+    const diff = rs.balance - rb.balance;
+    setTone($('#w-diff'), diff > 0 ? 'profit' : diff < 0 ? 'loss' : 'even');
+    $('#w-diff-value').innerHTML = diff === 0
+      ? `${ICON.even}<span>ללא שינוי</span>`
+      : `${diff > 0 ? ICON.up : ICON.down}<span>${diff > 0 ? 'עלייה' : 'ירידה'} של</span><bdi>${money(Math.abs(diff))}</bdi>`;
+  }
+
+  function renderAll() {
+    const p = parseBudget(state);
+    if (p.count === 0) lastValid = p.isEmpty ? null : p.values;
+    renderErrors(p);
+    renderInline(p);
+    renderSummary(p);
+    renderWhatIf(p);
+  }
+
+  // ---------- Toast / undo ----------
+  function hideToast() { clearTimeout(toastTimer); $('#toast').hidden = true; pendingUndo = null; }
+  function showToast(expense, index) {
+    pendingUndo = { expense, index };
+    const t = $('#toast');
+    $('#toast-msg').textContent = `ההוצאה „${expense.name.trim() || 'ללא שם'}” נמחקה`;
+    t.hidden = false;
+    t.classList.remove('is-running'); void t.offsetWidth; t.classList.add('is-running');
+    clearTimeout(toastTimer);
+    toastTimer = setTimeout(hideToast, 6000);
+    announce(`ההוצאה ${expense.name.trim() || 'ללא שם'} נמחקה. אפשר לבטל.`, 0);
+  }
+
+  function deleteExpense(id) {
+    const index = state.expenses.findIndex((e) => e.id === id);
+    if (index < 0) return;
+    const finish = () => {
+      const [expense] = state.expenses.splice(index, 1);
+      renderExpenses();
+      renderAll();
+      showToast(expense, index);
+      const dels = $$('[data-role="delete"]', list);
+      (dels[index] || addBtn).focus();
+    };
+    const row = list.querySelector(`[data-id="${id}"]`);
+    if (reducedMotion || !row) return finish();
+    row.classList.add('is-leaving');
+    setTimeout(finish, 220);
+  }
+
+  $('#toast-undo').addEventListener('click', () => {
+    if (!pendingUndo) return;
+    const { expense, index } = pendingUndo;
+    state.expenses.splice(Math.min(index, state.expenses.length), 0, expense);
+    hideToast();
+    renderExpenses(expense.id);
+    renderAll();
+    $(`#n-${expense.id}`).focus();
+    announce('ההוצאה שוחזרה', 0);
+  });
+  $('#toast-close').addEventListener('click', hideToast);
+
+  // ---------- Events ----------
+  for (const input of eventInputs) {
+    input.addEventListener('input', () => { state.event[input.dataset.key] = input.value; renderAll(); });
+    input.addEventListener('blur', () => {
+      const k = input.dataset.key;
+      if (NO_FORMAT.has(k) || input.value.trim() === '') return;
+      const r = parseWhole(input.value);
+      if (!r.err) { input.value = num(r.v); state.event[k] = input.value; }
+    });
+  }
+
+  list.addEventListener('input', (ev) => {
+    const row = ev.target.closest('.exp-row'); if (!row) return;
+    const exp = state.expenses.find((e) => e.id === row.dataset.id);
+    if (ev.target.dataset.role === 'name') {
+      exp.name = ev.target.value;
+      const label = exp.name.trim() || 'ללא שם';
+      $('[data-role="delete"]', row).setAttribute('aria-label', `מחיקת ההוצאה ${label}`);
+      $('[data-role="amount"]', row).setAttribute('aria-label', `סכום עבור ${label} (₪)`);
+      $('.exp-icon', row).innerHTML = iconFor(exp.name);
+    } else if (ev.target.dataset.role === 'amount') {
+      exp.amount = ev.target.value;
+    }
+    renderAll();
+  });
+  list.addEventListener('focusout', (ev) => {
+    if (ev.target.dataset.role !== 'amount' || ev.target.value.trim() === '') return;
+    const r = parseWhole(ev.target.value);
+    if (!r.err) {
+      ev.target.value = num(r.v);
+      state.expenses.find((e) => e.id === ev.target.closest('.exp-row').dataset.id).amount = ev.target.value;
+    }
+  });
+  list.addEventListener('click', (ev) => {
+    const btn = ev.target.closest('[data-role="delete"]');
+    if (btn) deleteExpense(btn.closest('.exp-row').dataset.id);
+  });
+
+  addBtn.addEventListener('click', () => {
+    const e = { id: nid(), name: '', amount: '' };
+    state.expenses.push(e);
+    renderExpenses(e.id);
+    renderAll();
+    $(`#n-${e.id}`).focus();
+  });
+
+  sMeal.addEventListener('input', () => renderAll());
+  sGift.addEventListener('input', () => renderAll());
+  sRate.addEventListener('input', () => { rateTouched = true; renderAll(); });
+  $('#w-reset').addEventListener('click', () => { sMeal.value = 0; sGift.value = 0; rateTouched = false; renderAll(); });
+
+  $('#sum-alert-link').addEventListener('click', () => {
+    const first = $('.layout [aria-invalid="true"]');
+    if (first) { first.closest('details')?.setAttribute('open', ''); first.focus(); first.scrollIntoView({ block: 'center' }); }
+  });
+
+  $('#reset-all').addEventListener('click', () => {
+    if (!confirm('למחוק את כל הנתונים ולהתחיל מחדש?')) return;
+    applyPreset('empty');
+    $('#f-invited').focus();
+  });
+
+  // ---------- Entrance animations ----------
+  if (!reducedMotion && 'IntersectionObserver' in window) {
+    document.documentElement.classList.add('motion');
+    const io = new IntersectionObserver((entries) => {
+      for (const en of entries) if (en.isIntersecting) { en.target.classList.add('is-visible'); io.unobserve(en.target); }
+    }, { threshold: 0.08 });
+    $$('.reveal').forEach((el) => io.observe(el));
+  }
+
+  // ---------- Preview controls ----------
+  function applyPreset(name) {
+    hideToast();
+    lastValid = null; rateTouched = false; sMeal.value = 0; sGift.value = 0;
+    if (name === 'outdated') {
+      state = PRESETS.profit();
+      fillInputs(); renderAll();
+      state.event.mealPrice = '35O';
+      state.expenses[1].amount = '9,000-';
+      fillInputs(); renderAll();
+    } else {
+      state = PRESETS[name]();
+      fillInputs(); renderAll();
+    }
+    $$('[data-preset]').forEach((b) => b.setAttribute('aria-pressed', String(b.dataset.preset === name)));
+  }
+  function setView(view) {
+    $('#stage').classList.toggle('is-mobile', view === 'mobile');
+    $$('[data-view]').forEach((b) => b.setAttribute('aria-pressed', String(b.dataset.view === view)));
+  }
+  $$('[data-preset]').forEach((b) => b.addEventListener('click', () => applyPreset(b.dataset.preset)));
+  $$('[data-view]').forEach((b) => b.addEventListener('click', () => setView(b.dataset.view)));
+
+  const params = new URLSearchParams(location.hash.slice(1));
+  setView(params.get('view') === 'mobile' ? 'mobile' : 'desktop');
+  applyPreset(['profit', 'loss', 'outdated', 'zero', 'empty'].includes(params.get('preset')) ? params.get('preset') : 'profit');
+
+  // Test hook (prototype only): #test=1 runs an interaction smoke test and writes the result to the title.
+  if (params.get('test') === '1') {
+    setTimeout(() => {
+      const out = [];
+      const ok = (name, cond) => out.push(`${cond ? 'PASS' : 'FAIL'}:${name}`);
+      const rowsBefore = state.expenses.length;
+      addBtn.click();
+      ok('add', state.expenses.length === rowsBefore + 1 && document.activeElement?.dataset.role === 'name');
+      const nameInput = document.activeElement;
+      nameInput.value = 'הסעות'; nameInput.dispatchEvent(new Event('input', { bubbles: true }));
+      const amt = $(`#a-${state.expenses.at(-1).id}`);
+      amt.value = '2000'; amt.dispatchEvent(new Event('input', { bubbles: true }));
+      const r1 = calculate(parseBudget(state).values);
+      ok('add-updates-total', r1.additionalCost === 32000);
+      const firstId = state.expenses[0].id;
+      $(`[data-id="${firstId}"] [data-role="delete"]`).click();
+      setTimeout(() => {
+        ok('delete', !state.expenses.some((e) => e.id === firstId) && !$('#toast').hidden);
+        $('#toast-undo').click();
+        ok('undo', state.expenses[0].id === firstId && $('#toast').hidden);
+        const mp = $('#f-mealPrice'); mp.value = '3x0'; mp.dispatchEvent(new Event('input', { bubbles: true }));
+        ok('stale', !$('#bal-stale').hidden && !$('#sum-alert').hidden && mp.getAttribute('aria-invalid') === 'true');
+        mp.value = '350'; mp.dispatchEvent(new Event('input', { bubbles: true }));
+        ok('recover', $('#bal-stale').hidden);
+        sMeal.value = 10; sMeal.dispatchEvent(new Event('input', { bubbles: true }));
+        ok('whatif', /385/.test($('#h-meal').textContent));
+        const img = $('.photo-frame img');
+        ok('photo', !!img && img.complete && img.naturalWidth === 1672);
+        document.title = 'TEST ' + out.join(' ');
+      }, 400);
+    }, 300);
+  }
+})();
+</script>
+</body>
+</html>

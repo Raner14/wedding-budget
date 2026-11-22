@@ -22,3 +22,6 @@ dist-ssr
 *.njsproj
 *.sln
 *.sw?
+
+# Personal photo originals (only optimized copies in public/images are committed)
+design-preview/images/
