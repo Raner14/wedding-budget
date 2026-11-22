@@ -1,7 +1,7 @@
 import { describe, expect, it, vi } from 'vitest'
-import { act, render, screen, within } from '@testing-library/react'
+import { act, screen, within } from '@testing-library/react'
 import userEvent from '@testing-library/user-event'
-import App from './App.jsx'
+import { renderApp } from './test/renderApp.jsx'
 import { BUDGET_STORAGE_KEY } from './lib/budgetStorage.js'
 
 const normalize = (s) => s.replace(/[\u200e\u200f]/g, '').replace(/\u00a0/g, ' ')
@@ -20,7 +20,7 @@ const venueAmount = () => normalize(document.querySelector('.venue-row .venue-am
 
 describe('Expense management', () => {
   it('starts with DJ, photographer and wedding dress, plus the automatic venue row', () => {
-    render(<App />)
+    renderApp()
     expect(rowNames()).toEqual(['די-ג׳יי', 'צלם', 'שמלת כלה'])
     expect(screen.getByText('מחושב אוטומטית')).toBeTruthy()
     expect(venueAmount()).toContain('0')
@@ -28,7 +28,7 @@ describe('Expense management', () => {
 
   it('computes the venue row automatically from the event details', async () => {
     const user = userEvent.setup()
-    render(<App />)
+    renderApp()
     await user.type(screen.getByLabelText('כמה אורחים מזמינים?'), '300')
     await user.type(screen.getByLabelText('מחיר למנה (₪)'), '350')
     expect(venueAmount()).toContain('89,250') // 255 × 350
@@ -38,7 +38,7 @@ describe('Expense management', () => {
 
   it('edits names and amounts and updates the subtotal', async () => {
     const user = userEvent.setup()
-    render(<App />)
+    renderApp()
     await user.type(screen.getByRole('textbox', { name: 'סכום עבור די-ג׳יי (₪)' }), '6000')
     await user.type(screen.getByRole('textbox', { name: 'סכום עבור צלם (₪)' }), '9000')
     expect(subtotal()).toContain('15,000')
@@ -52,7 +52,7 @@ describe('Expense management', () => {
 
   it('formats an amount with separators on blur', async () => {
     const user = userEvent.setup()
-    render(<App />)
+    renderApp()
     const amount = screen.getByRole('textbox', { name: 'סכום עבור שמלת כלה (₪)' })
     await user.type(amount, '12500')
     await user.tab()
@@ -61,7 +61,7 @@ describe('Expense management', () => {
 
   it('treats an empty or zero amount as "not applicable"', async () => {
     const user = userEvent.setup()
-    render(<App />)
+    renderApp()
     await user.type(screen.getByRole('textbox', { name: 'סכום עבור די-ג׳יי (₪)' }), '0')
     expect(subtotal()).toContain('0')
     expect(screen.queryByText(/יש להזין/)).toBeNull()
@@ -69,7 +69,7 @@ describe('Expense management', () => {
 
   it('adds a custom expense, focuses its name and includes it in the subtotal', async () => {
     const user = userEvent.setup()
-    render(<App />)
+    renderApp()
     await user.click(screen.getByRole('button', { name: 'הוספת הוצאה' }))
     expect(rowNames()).toHaveLength(4)
     const newName = within(list()).getAllByRole('textbox', { name: 'שם ההוצאה' })[3]
@@ -81,7 +81,7 @@ describe('Expense management', () => {
 
   it('requires a name once an expense has an amount', async () => {
     const user = userEvent.setup()
-    render(<App />)
+    renderApp()
     await user.click(screen.getByRole('button', { name: 'הוספת הוצאה' }))
     expect(screen.queryByText('יש להזין שם להוצאה')).toBeNull()
     await user.type(screen.getByRole('textbox', { name: 'סכום עבור ללא שם (₪)' }), '500')
@@ -92,7 +92,7 @@ describe('Expense management', () => {
 
   it('shows an amount error and hides the subtotal while it is invalid', async () => {
     const user = userEvent.setup()
-    render(<App />)
+    renderApp()
     const amount = screen.getByRole('textbox', { name: 'סכום עבור צלם (₪)' })
     await user.type(amount, '9,000-')
     expect(amount.getAttribute('aria-invalid')).toBe('true')
@@ -101,7 +101,7 @@ describe('Expense management', () => {
 
   it('deletes an expense, moves focus, and restores it in place with undo', async () => {
     const user = userEvent.setup()
-    render(<App />)
+    renderApp()
     await user.type(screen.getByRole('textbox', { name: 'סכום עבור צלם (₪)' }), '9000')
     await user.click(screen.getByRole('button', { name: 'מחיקת ההוצאה צלם' }))
 
@@ -121,14 +121,14 @@ describe('Expense management', () => {
 
   it('moves focus to the add button after deleting the last row', async () => {
     const user = userEvent.setup()
-    render(<App />)
+    renderApp()
     await user.click(screen.getByRole('button', { name: 'מחיקת ההוצאה שמלת כלה' }))
     expect(document.activeElement).toBe(screen.getByRole('button', { name: 'הוספת הוצאה' }))
   })
 
   it('shows an empty state when every expense is deleted', async () => {
     const user = userEvent.setup()
-    render(<App />)
+    renderApp()
     for (const name of ['די-ג׳יי', 'צלם', 'שמלת כלה']) {
       await user.click(screen.getByRole('button', { name: `מחיקת ההוצאה ${name}` }))
     }
@@ -138,7 +138,7 @@ describe('Expense management', () => {
 
   it('keeps only the latest deletion undoable', async () => {
     const user = userEvent.setup()
-    render(<App />)
+    renderApp()
     await user.click(screen.getByRole('button', { name: 'מחיקת ההוצאה די-ג׳יי' }))
     await user.click(screen.getByRole('button', { name: 'מחיקת ההוצאה צלם' }))
     expect(document.querySelectorAll('.toast')).toHaveLength(1)
@@ -148,7 +148,7 @@ describe('Expense management', () => {
 
   it('closes the toast with the close button', async () => {
     const user = userEvent.setup()
-    render(<App />)
+    renderApp()
     await user.click(screen.getByRole('button', { name: 'מחיקת ההוצאה צלם' }))
     await user.click(screen.getByRole('button', { name: 'סגירת ההודעה' }))
     expect(queryToast()).toBeNull()
@@ -159,7 +159,7 @@ describe('Expense management', () => {
     vi.useFakeTimers({ shouldAdvanceTime: true })
     try {
       const user = userEvent.setup({ advanceTimers: vi.advanceTimersByTime })
-      render(<App />)
+      renderApp()
       await user.click(screen.getByRole('button', { name: 'מחיקת ההוצאה צלם' }))
       act(() => vi.advanceTimersByTime(5900))
       expect(getToast()).toBeTruthy()
@@ -172,14 +172,14 @@ describe('Expense management', () => {
 
   it('persists expense changes, including deletions and additions', async () => {
     const user = userEvent.setup()
-    const first = render(<App />)
+    const first = renderApp()
     await user.click(screen.getByRole('button', { name: 'מחיקת ההוצאה די-ג׳יי' }))
     await user.click(screen.getByRole('button', { name: 'הוספת הוצאה' }))
     await user.type(within(list()).getAllByRole('textbox', { name: 'שם ההוצאה' })[2], 'הזמנות')
     first.unmount()
 
     expect(JSON.parse(localStorage.getItem(BUDGET_STORAGE_KEY)).expenses.map((e) => e.name)).toEqual(['צלם', 'שמלת כלה', 'הזמנות'])
-    render(<App />)
+    renderApp()
     expect(rowNames()).toEqual(['צלם', 'שמלת כלה', 'הזמנות'])
   })
 })

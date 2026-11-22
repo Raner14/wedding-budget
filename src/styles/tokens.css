@@ -50,7 +50,8 @@
   --ease: cubic-bezier(.22, .8, .24, 1);
 
   /* Layout */
-  --sticky-top: 24px;
+  --nav-height: 64px;
+  --sticky-top: calc(var(--nav-height) + 24px);
 }
 
 /* Financial tones: profit / loss / even / stale (outdated). Always paired with an icon + word. */

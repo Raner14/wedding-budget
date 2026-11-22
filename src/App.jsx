@@ -1,156 +1,52 @@
-import { useEffect, useReducer, useState } from 'react'
-import { flushSync } from 'react-dom'
-import { Blossom, SvgDefs } from './components/Botanicals.jsx'
-import Hero from './components/Hero.jsx'
-import Reveal from './components/Reveal.jsx'
-import Dock from './components/Dock.jsx'
-import Icon from './components/Icon.jsx'
-import SiteFooter from './components/SiteFooter.jsx'
-import UndoToast from './components/UndoToast.jsx'
-import EventDetailsForm from './components/calculator/EventDetailsForm.jsx'
-import ExpensesList from './components/calculator/ExpensesList.jsx'
-import BudgetSummary from './components/calculator/BudgetSummary.jsx'
-import MobileBalanceBar from './components/calculator/MobileBalanceBar.jsx'
-import WhatIfPanel from './components/calculator/WhatIfPanel.jsx'
-import { actions, budgetReducer } from './lib/budgetState.js'
-import { loadBudget, saveBudget } from './lib/budgetStorage.js'
-import { isStorageAvailable } from './lib/safeStorage.js'
-import { parseBudget, parseWhole } from './lib/validation.js'
-import { calculateAttendingGuests } from './lib/budget.js'
-import './App.css'
+import { useEffect, useRef } from 'react'
+import { Route, Routes, useLocation } from 'react-router'
+import { SvgDefs } from './components/Botanicals.jsx'
+import SiteNav from './components/SiteNav.jsx'
+import CalculatorPage from './pages/CalculatorPage.jsx'
+import TasksPage from './pages/TasksPage.jsx'
+import NotFoundPage from './pages/NotFoundPage.jsx'
 
-const UNDO_TIMEOUT_MS = 6000
+const SITE_NAME = 'מתחתנים בראש שקט'
+const TITLES = {
+  '/': `${SITE_NAME} · מחשבון תקציב חתונה`,
+  '/tasks': `המשימות שלנו · ${SITE_NAME}`,
+}
 
-/** Attending guests can be shown as soon as both inputs it depends on are valid. */
-function attendingFrom(event, errors) {
-  if (errors.invitedGuests || errors.attendanceRate) return null
-  return calculateAttendingGuests(parseWhole(event.invitedGuests).value, parseWhole(event.attendanceRate).value)
+/**
+ * On client-side navigation: update the document title, scroll to the top and move
+ * focus to the new page's heading so screen-reader users hear the page change.
+ * The first render keeps the browser's default focus and scroll (e.g. #anchors).
+ */
+function RouteAnnouncer() {
+  const { pathname } = useLocation()
+  const isFirst = useRef(true)
+
+  useEffect(() => {
+    document.title = TITLES[pathname] ?? `הדף לא נמצא · ${SITE_NAME}`
+    if (isFirst.current) {
+      isFirst.current = false
+      return
+    }
+    window.scrollTo?.(0, 0)
+    document.getElementById('page-title')?.focus({ preventScroll: true })
+  }, [pathname])
+
+  return null
 }
 
 function App() {
-  const [state, dispatch] = useReducer(budgetReducer, undefined, loadBudget)
-  const { event, expenses, lastValidValues } = state
-  /** Only the most recent deletion can be undone. */
-  const [pendingUndo, setPendingUndo] = useState(null)
-  const [highlightId, setHighlightId] = useState(null)
-  const [canSave] = useState(isStorageAvailable)
-
-  // Persist the raw input on every change. Failures are tolerated (private mode, quota).
-  useEffect(() => {
-    saveBudget({ event, expenses })
-  }, [event, expenses])
-
-  // Auto-dismiss the undo toast. A newer deletion replaces it and restarts the timer.
-  useEffect(() => {
-    if (!pendingUndo) return undefined
-    const timer = setTimeout(() => setPendingUndo(null), UNDO_TIMEOUT_MS)
-    return () => clearTimeout(timer)
-  }, [pendingUndo])
-
-  const parsed = parseBudget(state)
-  const scenarioValues = parsed.errorCount === 0 && !parsed.isEmpty ? parsed.values : null
-
-  function handleAddExpense(expense) {
-    dispatch(actions.expenseAdded(expense))
-    setHighlightId(expense.id)
-  }
-
-  function handleRemoveExpense(expense, index) {
-    dispatch(actions.expenseRemoved(expense.id))
-    setPendingUndo({ expense, index })
-  }
-
-  function handleUndo() {
-    if (!pendingUndo) return
-    const { expense, index } = pendingUndo
-    flushSync(() => {
-      dispatch(actions.expenseRestored(expense, index))
-      setHighlightId(expense.id)
-      setPendingUndo(null)
-    })
-    document.getElementById(`expense-name-${expense.id}`)?.focus()
-  }
-
-  function handleResetAll() {
-    if (!window.confirm('למחוק את כל הנתונים ולהתחיל מחדש?')) return
-    flushSync(() => {
-      dispatch(actions.reset())
-      setPendingUndo(null)
-      setHighlightId(null)
-    })
-    document.getElementById('field-invitedGuests')?.focus()
-  }
-
   return (
     <>
       <SvgDefs />
-      <a className="skip-link" href="#calculator">דלגו למחשבון</a>
+      <RouteAnnouncer />
+      <a className="skip-link" href="#main-content">דלגו לתוכן הראשי</a>
       <div className="app">
-        <div className="app-inner">
-          <Hero />
-
-          <Reveal className="section-intro" id="calculator" tabIndex={-1}>
-            <div className="ornament" aria-hidden="true"><Blossom /></div>
-            <p className="kicker">המחשבון שלנו</p>
-            <h2 className="section-title">כמה תעלה החתונה, וכמה תחזיר?</h2>
-            <p className="section-sub">ממלאים כמה פרטים, והמאזן מתעדכן מיד. אפשר לשנות כל דבר בכל רגע.</p>
-          </Reveal>
-
-          <main>
-            <div className="layout">
-              <div className="col-inputs">
-                <EventDetailsForm
-                  event={event}
-                  errors={parsed.errors.event}
-                  attendingGuests={attendingFrom(event, parsed.errors.event)}
-                  onFieldChange={(field, value) => dispatch(actions.fieldChanged(field, value))}
-                />
-                <ExpensesList
-                  expenses={expenses}
-                  errors={parsed.errors.expenses}
-                  venueCost={parsed.venueCost}
-                  expensesTotal={parsed.expensesTotal}
-                  highlightId={highlightId}
-                  onAdd={handleAddExpense}
-                  onUpdate={(id, patch) => dispatch(actions.expenseUpdated(id, patch))}
-                  onRemove={handleRemoveExpense}
-                />
-              </div>
-              <BudgetSummary parsed={parsed} lastValidValues={lastValidValues} />
-            </div>
-            <WhatIfPanel
-              values={scenarioValues}
-              disabledReason={parsed.errorCount > 0 ? 'יש לתקן את השדות המסומנים כדי לבחון תרחישים.' : 'הזינו פרטי אירוע כדי לבחון תרחישים.'}
-            />
-          </main>
-
-          <SiteFooter>
-            {!canSave && (
-              <div className="alert alert-warn storage-warning" role="alert">
-                <Icon name="warning" strokeWidth={2} />
-                <p>הדפדפן לא מאפשר לשמור נתונים, ולכן הם יימחקו ברענון הדף.</p>
-              </div>
-            )}
-            <p>
-              התוצאות הן הערכה בלבד ואינן מהוות ייעוץ פיננסי. כל המחירים כוללים מע״מ.
-              <br />
-              הנתונים נשמרים רק בדפדפן שלכם ולא נשלחים לשום שרת.
-            </p>
-            <button type="button" className="btn btn-ghost" onClick={handleResetAll}>התחל מחדש</button>
-          </SiteFooter>
-        </div>
-
-        <Dock>
-          {pendingUndo && (
-            <UndoToast
-              key={pendingUndo.expense.id}
-              message={`ההוצאה „${pendingUndo.expense.name.trim() || 'ללא שם'}” נמחקה`}
-              onUndo={handleUndo}
-              onClose={() => setPendingUndo(null)}
-            />
-          )}
-          <MobileBalanceBar parsed={parsed} lastValidValues={lastValidValues} />
-        </Dock>
+        <SiteNav />
+        <Routes>
+          <Route path="/" element={<CalculatorPage />} />
+          <Route path="/tasks" element={<TasksPage />} />
+          <Route path="*" element={<NotFoundPage />} />
+        </Routes>
       </div>
     </>
   )

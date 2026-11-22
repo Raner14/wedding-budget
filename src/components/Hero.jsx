@@ -15,11 +15,11 @@ export default function Hero() {
   const [photoFailed, setPhotoFailed] = useState(false)
 
   return (
-    <header className="hero">
+    <section className="hero" aria-labelledby="page-title">
       <div className="hero-grid">
         <Reveal className="hero-copy">
           <p className="hero-eyebrow"><Heart />מחשבון תקציב חתונה</p>
-          <h1 className="hero-title">
+          <h1 className="hero-title" id="page-title" tabIndex={-1}>
             מתחתנים{' '}
             <span className="hl">
               בראש שקט
@@ -68,6 +68,6 @@ export default function Hero() {
           <figcaption className="love-note"><Heart />נבנה באהבה, לקראת החתונה שלנו</figcaption>
         </Reveal>
       </div>
-    </header>
+    </section>
   )
 }

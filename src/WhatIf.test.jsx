@@ -1,7 +1,7 @@
 import { describe, expect, it } from 'vitest'
-import { fireEvent, render, screen } from '@testing-library/react'
+import { fireEvent, screen } from '@testing-library/react'
 import userEvent from '@testing-library/user-event'
-import App from './App.jsx'
+import { renderApp } from './test/renderApp.jsx'
 import { BUDGET_STORAGE_KEY } from './lib/budgetStorage.js'
 import { normalize, SAMPLES, seedBudget } from './test/helpers.js'
 
@@ -17,7 +17,7 @@ const hint = (label) => normalize(document.getElementById(`${slider(label).id}-h
 describe('What-if scenarios', () => {
   it('starts neutral: the scenario equals the current balance', () => {
     seedBudget(SAMPLES.profit)
-    render(<App />)
+    renderApp()
     expect(scenario()).toContain('רווח צפוי')
     expect(scenario()).toContain('9,525')
     expect(diff()).toContain('ללא שינוי')
@@ -26,7 +26,7 @@ describe('What-if scenarios', () => {
 
   it('meal price +10%: 350 → 385, venue 98,175, balance +600 (−8,925)', () => {
     seedBudget(SAMPLES.profit)
-    render(<App />)
+    renderApp()
     move(MEAL, 10)
     expect(hint(MEAL)).toContain('385')
     expect(scenario()).toContain('רווח צפוי')
@@ -38,7 +38,7 @@ describe('What-if scenarios', () => {
 
   it('applies the meal change to reserve meals too', () => {
     seedBudget(SAMPLES.loss)
-    render(<App />)
+    renderApp()
     move(MEAL, 10)
     expect(hint(MEAL)).toContain('418')
     expect(hint(MEAL)).toContain('רזרבה: 220')
@@ -49,7 +49,7 @@ describe('What-if scenarios', () => {
 
   it('attendance 70%: 210 guests, the 250 minimum is billed, balance −11,450', () => {
     seedBudget(SAMPLES.profit)
-    render(<App />)
+    renderApp()
     move(RATE, 70)
     expect(hint(RATE)).toContain('≈ 210 אורחים מגיעים (מתוך 300)')
     expect(scenario()).toContain('הפסד צפוי')
@@ -59,7 +59,7 @@ describe('What-if scenarios', () => {
 
   it('average gift −10%: 505 → 455 (half rounds up), balance −3,225', () => {
     seedBudget(SAMPLES.profit)
-    render(<App />)
+    renderApp()
     move(GIFT, -10)
     expect(hint(GIFT)).toContain('455')
     expect(scenario()).toContain('הפסד צפוי')
@@ -69,7 +69,7 @@ describe('What-if scenarios', () => {
 
   it('combines all three adjustments', () => {
     seedBudget(SAMPLES.profit)
-    render(<App />)
+    renderApp()
     move(MEAL, 20) // 420
     move(RATE, 90) // 270 guests
     move(GIFT, 10) // 556 (555.5 → 556)
@@ -80,7 +80,7 @@ describe('What-if scenarios', () => {
 
   it('never changes the entered data or what is saved', () => {
     seedBudget(SAMPLES.profit)
-    render(<App />)
+    renderApp()
     const savedBefore = localStorage.getItem(BUDGET_STORAGE_KEY)
     move(MEAL, 30)
     move(RATE, 50)
@@ -94,7 +94,7 @@ describe('What-if scenarios', () => {
   it('resets the scenario', async () => {
     const user = userEvent.setup()
     seedBudget(SAMPLES.profit)
-    render(<App />)
+    renderApp()
     move(MEAL, 10)
     move(RATE, 60)
     await user.click(screen.getByRole('button', { name: 'איפוס תרחיש' }))
@@ -106,7 +106,7 @@ describe('What-if scenarios', () => {
   it('follows the entered attendance until the user moves the slider', async () => {
     const user = userEvent.setup()
     seedBudget(SAMPLES.profit)
-    render(<App />)
+    renderApp()
     const rate = screen.getByLabelText('אחוז הגעה צפוי (%)')
     await user.clear(rate)
     await user.type(rate, '90')
@@ -116,14 +116,14 @@ describe('What-if scenarios', () => {
 
   it('uses the exact entered rate below the slider minimum (no phantom difference)', () => {
     seedBudget({ ...SAMPLES.profit, event: { ...SAMPLES.profit.event, attendanceRate: '40' } })
-    render(<App />)
+    renderApp()
     expect(slider(RATE).value).toBe('50') // the thumb is clamped to the slider range…
     expect(diff()).toContain('ללא שינוי') // …but the scenario uses 40%
   })
 
   it('is disabled with an explanation while fields are invalid or empty', async () => {
     const user = userEvent.setup()
-    render(<App />)
+    renderApp()
     expect(screen.getByText('הזינו פרטי אירוע כדי לבחון תרחישים.')).toBeTruthy()
     expect(slider(MEAL).disabled).toBe(true)
     await user.type(screen.getByLabelText('כמה אורחים מזמינים?'), 'x')

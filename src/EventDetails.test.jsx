@@ -1,7 +1,7 @@
 import { describe, expect, it } from 'vitest'
-import { render, screen, within } from '@testing-library/react'
+import { screen, within } from '@testing-library/react'
 import userEvent from '@testing-library/user-event'
-import App from './App.jsx'
+import { renderApp } from './test/renderApp.jsx'
 import { BUDGET_STORAGE_KEY } from './lib/budgetStorage.js'
 
 const LABELS = {
@@ -19,12 +19,12 @@ const attendingText = () => screen.getByText(/צפויים לחגוג איתכם
 
 describe('Event details form', () => {
   it('exposes every approved input with an accessible Hebrew label', () => {
-    render(<App />)
+    renderApp()
     for (const label of Object.values(LABELS)) expect(screen.getByLabelText(label)).toBeTruthy()
   })
 
   it('starts with an illustrative 85% attendance rate and explains it', () => {
-    render(<App />)
+    renderApp()
     const rate = screen.getByLabelText(LABELS.rate)
     expect(rate.value).toBe('85')
     const help = document.getElementById(rate.getAttribute('aria-describedby'))
@@ -33,7 +33,7 @@ describe('Event details form', () => {
 
   it('updates the expected attending guests while typing', async () => {
     const user = userEvent.setup()
-    render(<App />)
+    renderApp()
     await user.type(screen.getByLabelText(LABELS.invited), '300')
     expect(attendingText()).toContain('255')
     await user.clear(screen.getByLabelText(LABELS.rate))
@@ -43,7 +43,7 @@ describe('Event details form', () => {
 
   it('shows a field error for invalid input and clears it once fixed', async () => {
     const user = userEvent.setup()
-    render(<App />)
+    renderApp()
     const meal = screen.getByLabelText(LABELS.mealPrice)
     await user.type(meal, '12א')
     expect(meal.getAttribute('aria-invalid')).toBe('true')
@@ -61,7 +61,7 @@ describe('Event details form', () => {
 
   it('rejects an attendance rate above 100%', async () => {
     const user = userEvent.setup()
-    render(<App />)
+    renderApp()
     const rate = screen.getByLabelText(LABELS.rate)
     await user.clear(rate)
     await user.type(rate, '120')
@@ -71,7 +71,7 @@ describe('Event details form', () => {
 
   it('formats amounts with thousands separators on blur, but never the percentage', async () => {
     const user = userEvent.setup()
-    render(<App />)
+    renderApp()
     const meal = screen.getByLabelText(LABELS.mealPrice)
     await user.type(meal, '15000')
     await user.tab()
@@ -85,7 +85,7 @@ describe('Event details form', () => {
 
   it('keeps reserve meals collapsed by default and opens them when a reserve field is invalid', async () => {
     const user = userEvent.setup()
-    render(<App />)
+    renderApp()
     const details = screen.getByText('מנות רזרבה').closest('details')
     expect(details.open).toBe(false)
     await user.click(within(details).getByText('מנות רזרבה'))
@@ -99,7 +99,7 @@ describe('Event details form', () => {
 
   it('saves every change to localStorage', async () => {
     const user = userEvent.setup()
-    render(<App />)
+    renderApp()
     await user.type(screen.getByLabelText(LABELS.invited), '300')
     await user.type(screen.getByLabelText(LABELS.gift), '450')
     expect(stored()).toMatchObject({ version: 1, event: { invitedGuests: '300', averageGift: '450' } })
@@ -107,13 +107,13 @@ describe('Event details form', () => {
 
   it('restores the saved form after a reload', async () => {
     const user = userEvent.setup()
-    const first = render(<App />)
+    const first = renderApp()
     await user.type(screen.getByLabelText(LABELS.invited), '300')
     await user.type(screen.getByLabelText(LABELS.reserveMeals), '10')
     await user.type(screen.getByLabelText(LABELS.reservePrice), '200')
     first.unmount()
 
-    render(<App />)
+    renderApp()
     expect(screen.getByLabelText(LABELS.invited).value).toBe('300')
     expect(screen.getByLabelText(LABELS.reservePrice).value).toBe('200')
     expect(screen.getByText('מנות רזרבה').closest('details').open).toBe(true)
@@ -126,7 +126,7 @@ describe('Event details form', () => {
       event: { invitedGuests: '300', attendanceRate: '85', mealPrice: '35O' },
       expenses: [],
     }))
-    render(<App />)
+    renderApp()
     const meal = screen.getByLabelText(LABELS.mealPrice)
     expect(meal.value).toBe('35O')
     expect(meal.getAttribute('aria-invalid')).toBe('true')
@@ -134,7 +134,7 @@ describe('Event details form', () => {
 
   it('recovers from corrupted saved data', () => {
     localStorage.setItem(BUDGET_STORAGE_KEY, '{broken')
-    render(<App />)
+    renderApp()
     expect(screen.getByLabelText(LABELS.invited).value).toBe('')
     expect(screen.getByLabelText(LABELS.rate).value).toBe('85')
   })

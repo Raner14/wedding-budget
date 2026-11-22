@@ -7,7 +7,8 @@
 *, *::before, *::after { box-sizing: border-box; }
 [hidden] { display: none !important; }
 
-html { -webkit-text-size-adjust: 100%; }
+/* Anchor jumps (#calculator, #summary) must not hide under the sticky navigation. */
+html { -webkit-text-size-adjust: 100%; scroll-padding-top: calc(var(--nav-height) + 12px); }
 @media (prefers-reduced-motion: no-preference) {
   html { scroll-behavior: smooth; }
 }
@@ -27,6 +28,8 @@ bdi { unicode-bidi: isolate; }
 button, input, select, textarea { font: inherit; color: inherit; }
 
 :focus-visible { outline: 2px solid var(--sage-600); outline-offset: 3px; }
+/* Headings / regions focused programmatically (route change, skip link) need no ring. */
+[tabindex="-1"]:focus { outline: none; }
 
 .sr-only {
   position: absolute; width: 1px; height: 1px; padding: 0; margin: -1px;
