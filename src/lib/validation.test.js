@@ -1,0 +1,177 @@
+// @vitest-environment node
+import { describe, expect, it } from 'vitest'
+import { formatWholeInput, MESSAGES, parseBudget, parseWhole } from './validation.js'
+
+function makeState(event = {}, expenses = []) {
+  return {
+    event: {
+      invitedGuests: '', attendanceRate: '85', mealPrice: '', minimumMeals: '',
+      reserveMeals: '', reserveMealPrice: '', averageGift: '', ...event,
+    },
+    expenses,
+  }
+}
+
+describe('parseWhole', () => {
+  it.each([
+    ['', 0],
+    ['   ', 0],
+    ['0', 0],
+    ['350', 350],
+    ['15,000', 15_000],
+    ['1,234,567', 1_234_567],
+    [' 42 ', 42],
+    ['007', 7],
+  ])('%j → %i', (raw, expected) => {
+    expect(parseWhole(raw)).toEqual({ value: expected })
+  })
+
+  it.each(['-5', '1.5', '12א', 'abc', '3e2', '+4', '٣', '9,000-'])('rejects %j', (raw) => {
+    expect(parseWhole(raw)).toEqual({ error: MESSAGES.notWhole })
+  })
+
+  it('treats null/undefined as empty', () => {
+    expect(parseWhole(undefined)).toEqual({ value: 0 })
+    expect(parseWhole(null)).toEqual({ value: 0 })
+  })
+})
+
+describe('parseBudget — event fields', () => {
+  it('converts a valid state into numeric values', () => {
+    const p = parseBudget(makeState(
+      { invitedGuests: '300', mealPrice: '350', minimumMeals: '250', averageGift: '505' },
+      [{ id: 'a', name: 'צלם', amount: '9,000' }],
+    ))
+    expect(p.errorCount).toBe(0)
+    expect(p.values).toEqual({
+      invitedGuests: 300, attendanceRate: 85, mealPrice: 350, minimumMeals: 250,
+      reserveMeals: 0, reserveMealPrice: 0, averageGift: 505,
+      expenses: [{ id: 'a', name: 'צלם', amount: 9_000 }],
+    })
+    expect(p.isEmpty).toBe(false)
+  })
+
+  it('reports a field error and returns null values', () => {
+    const p = parseBudget(makeState({ mealPrice: '35O' }))
+    expect(p.values).toBeNull()
+    expect(p.errorCount).toBe(1)
+    expect(p.errors.event).toEqual({ mealPrice: MESSAGES.notWhole })
+  })
+
+  it('enforces the attendance rate range', () => {
+    expect(parseBudget(makeState({ attendanceRate: '100' })).errorCount).toBe(0)
+    expect(parseBudget(makeState({ attendanceRate: '101' })).errors.event.attendanceRate).toBe(MESSAGES.rateRange)
+  })
+
+  it('enforces maximum counts and amounts', () => {
+    expect(parseBudget(makeState({ invitedGuests: '5000' })).errorCount).toBe(0)
+    expect(parseBudget(makeState({ invitedGuests: '5001' })).errors.event.invitedGuests).toBe(MESSAGES.maxCount)
+    expect(parseBudget(makeState({ minimumMeals: '5001' })).errors.event.minimumMeals).toBe(MESSAGES.maxCount)
+    expect(parseBudget(makeState({ mealPrice: '10,000,000' })).errorCount).toBe(0)
+    expect(parseBudget(makeState({ mealPrice: '10,000,001' })).errors.event.mealPrice).toBe(MESSAGES.maxMoney)
+  })
+
+  it('requires a reserve meal price only when reserve meals are entered', () => {
+    expect(parseBudget(makeState({ reserveMeals: '10' })).errors.event.reserveMealPrice).toBe(MESSAGES.reservePriceRequired)
+    expect(parseBudget(makeState({ reserveMeals: '10', reserveMealPrice: '200' })).errorCount).toBe(0)
+    expect(parseBudget(makeState({ reserveMeals: '', reserveMealPrice: '200' })).errorCount).toBe(0)
+    expect(parseBudget(makeState({ reserveMeals: '0' })).errorCount).toBe(0)
+  })
+
+  it('does not add the reserve-price error on top of a malformed reserve count', () => {
+    const p = parseBudget(makeState({ reserveMeals: 'x' }))
+    expect(p.errors.event).toEqual({ reserveMeals: MESSAGES.notWhole })
+    expect(p.errorCount).toBe(1)
+  })
+
+  it('counts every invalid field', () => {
+    const p = parseBudget(makeState({ invitedGuests: '-1', mealPrice: '1.5', averageGift: 'abc' }))
+    expect(p.errorCount).toBe(3)
+  })
+})
+
+describe('parseBudget — expenses', () => {
+  it('requires a name only once the expense has an amount', () => {
+    const empty = parseBudget(makeState({}, [{ id: 'a', name: '', amount: '' }]))
+    expect(empty.errorCount).toBe(0)
+    const withAmount = parseBudget(makeState({}, [{ id: 'a', name: '   ', amount: '500' }]))
+    expect(withAmount.errors.expenses).toEqual({ a: { name: MESSAGES.expenseNameRequired } })
+  })
+
+  it('validates expense amounts', () => {
+    const p = parseBudget(makeState({}, [
+      { id: 'a', name: 'צלם', amount: '9,000-' },
+      { id: 'b', name: 'די-ג׳יי', amount: '10,000,001' },
+    ]))
+    expect(p.errors.expenses).toEqual({ a: { amount: MESSAGES.notWhole }, b: { amount: MESSAGES.maxMoney } })
+    expect(p.errorCount).toBe(2)
+  })
+
+  it('rejects names longer than 60 characters', () => {
+    const p = parseBudget(makeState({}, [{ id: 'a', name: 'א'.repeat(61), amount: '1' }]))
+    expect(p.errors.expenses.a.name).toBe(MESSAGES.expenseNameTooLong)
+  })
+
+  it('treats empty amounts as 0 ("not applicable")', () => {
+    const p = parseBudget(makeState({ invitedGuests: '10' }, [{ id: 'a', name: 'צלם', amount: '' }]))
+    expect(p.values.expenses[0].amount).toBe(0)
+  })
+})
+
+describe('formatWholeInput', () => {
+  it.each([
+    ['15000', '15,000'],
+    ['1,500', '1,500'],
+    [' 350 ', '350'],
+    ['1234567', '1,234,567'],
+  ])('%j → %j', (raw, expected) => {
+    expect(formatWholeInput(raw).replace(/[\u200e\u200f]/g, '')).toBe(expected)
+  })
+
+  it.each(['', '   ', '12א', '-5'])('leaves %j untouched', (raw) => {
+    expect(formatWholeInput(raw)).toBe(raw)
+  })
+})
+
+describe('parseBudget — partial results', () => {
+  it('provides the venue cost even when an expense is invalid', () => {
+    const p = parseBudget(makeState({ invitedGuests: '100', attendanceRate: '100', mealPrice: '300' }, [{ id: 'a', name: 'צלם', amount: 'x' }]))
+    expect(p.values).toBeNull()
+    expect(p.venueCost).toBe(30_000)
+    expect(p.expensesTotal).toBeNull()
+  })
+
+  it('provides the expenses total even when an event field is invalid', () => {
+    const p = parseBudget(makeState({ mealPrice: 'x' }, [{ id: 'a', name: 'צלם', amount: '9,000' }, { id: 'b', name: 'די-ג׳יי', amount: '6000' }]))
+    expect(p.venueCost).toBeNull()
+    expect(p.expensesTotal).toBe(15_000)
+  })
+
+  it('keeps the expenses total when only an expense NAME is missing', () => {
+    const p = parseBudget(makeState({}, [{ id: 'a', name: '', amount: '500' }]))
+    expect(p.errorCount).toBe(1)
+    expect(p.expensesTotal).toBe(500)
+  })
+})
+
+describe('parseBudget — isEmpty', () => {
+  it('is empty with no guests and no costs', () => {
+    expect(parseBudget(makeState({}, [{ id: 'a', name: 'צלם', amount: '' }])).isEmpty).toBe(true)
+  })
+
+  it('is NOT empty when there are expenses but no guests (the loss must be shown)', () => {
+    expect(parseBudget(makeState({}, [{ id: 'a', name: 'צלם', amount: '5000' }])).isEmpty).toBe(false)
+  })
+
+  it('is NOT empty when a guaranteed minimum is billed with no guests', () => {
+    expect(parseBudget(makeState({ mealPrice: '300', minimumMeals: '100' })).isEmpty).toBe(false)
+  })
+
+  it('is NOT empty when guests are entered', () => {
+    expect(parseBudget(makeState({ invitedGuests: '10' })).isEmpty).toBe(false)
+  })
+
+  it('is never empty while there are errors', () => {
+    expect(parseBudget(makeState({ mealPrice: 'x' })).isEmpty).toBe(false)
+  })
+})
