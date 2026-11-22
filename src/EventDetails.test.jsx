@@ -3,6 +3,7 @@ import { screen, within } from '@testing-library/react'
 import userEvent from '@testing-library/user-event'
 import { renderApp } from './test/renderApp.jsx'
 import { BUDGET_STORAGE_KEY } from './lib/budgetStorage.js'
+import { normalize, SAMPLES, seedBudget } from './test/helpers.js'
 
 const LABELS = {
   invited: 'כמה אורחים מזמינים?',
@@ -137,5 +138,21 @@ describe('Event details form', () => {
     renderApp()
     expect(screen.getByLabelText(LABELS.invited).value).toBe('')
     expect(screen.getByLabelText(LABELS.rate).value).toBe('85')
+  })
+
+  // Regression: "350,5" used to be read as 3,505 (separators were stripped anywhere).
+  it('rejects a decimal comma instead of silently multiplying the price', async () => {
+    const user = userEvent.setup()
+    seedBudget(SAMPLES.profit)
+    renderApp()
+    const meal = screen.getByLabelText(LABELS.mealPrice)
+    await user.clear(meal)
+    await user.type(meal, '350,5')
+    await user.tab()
+    expect(meal.value).toBe('350,5') // not reformatted to "3,505"
+    expect(meal.getAttribute('aria-invalid')).toBe('true')
+    expect(screen.getByText('יש להזין מספר שלם, למשל 15,000')).toBeTruthy()
+    expect(normalize(document.querySelector('.venue-row .venue-amount').textContent)).toBe('—')
+    expect(normalize(document.getElementById('summary').textContent)).not.toContain('3,505')
   })
 })

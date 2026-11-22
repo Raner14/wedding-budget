@@ -22,6 +22,9 @@ describe('parseWhole', () => {
     ['1,234,567', 1_234_567],
     [' 42 ', 42],
     ['007', 7],
+    ['2,500', 2_500],
+    ['15 000', 15_000],
+    ['1 234 567', 1_234_567],
   ])('%j → %i', (raw, expected) => {
     expect(parseWhole(raw)).toEqual({ value: expected })
   })
@@ -29,6 +32,15 @@ describe('parseWhole', () => {
   it.each(['-5', '1.5', '12א', 'abc', '3e2', '+4', '٣', '9,000-'])('rejects %j', (raw) => {
     expect(parseWhole(raw)).toEqual({ error: MESSAGES.notWhole })
   })
+
+  // Regression: separators used to be stripped anywhere, so "350,5" (a decimal comma)
+  // silently became 3,505 — a ten-fold price error.
+  it.each(['350,5', '1,5', '1,50', '12,34,56', '1,2345', '1 5', '1, 000', ',500', '500,'])(
+    'rejects misplaced separators instead of guessing (%j)',
+    (raw) => {
+      expect(parseWhole(raw)).toEqual({ error: MESSAGES.notWhole })
+    },
+  )
 
   it('treats null/undefined as empty', () => {
     expect(parseWhole(undefined)).toEqual({ value: 0 })

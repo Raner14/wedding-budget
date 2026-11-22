@@ -13,7 +13,7 @@ export const MAX_MONEY = 10_000_000
 export const MAX_EXPENSE_NAME_LENGTH = 60
 
 export const MESSAGES = {
-  notWhole: 'יש להזין מספר שלם (ספרות בלבד)',
+  notWhole: 'יש להזין מספר שלם, למשל 15,000',
   maxCount: 'המספר המקסימלי הוא 5,000',
   maxMoney: 'הסכום המקסימלי הוא ₪10,000,000',
   rateRange: 'אחוז ההגעה צריך להיות בין 0 ל-100',
@@ -35,17 +35,21 @@ export const EVENT_FIELD_RULES = {
 
 export const EVENT_FIELDS = Object.keys(EVENT_FIELD_RULES)
 
+/** Plain digits, or digits with correctly placed thousands separators ("15,000", "1 234 567"). */
+const WHOLE_NUMBER = /^(?:\d+|\d{1,3}(?:,\d{3})+|\d{1,3}(?: \d{3})+)$/
+
 /**
- * Parses a whole, non-negative number. Thousands separators (",") and spaces
- * are accepted ("15,000"). An empty string means 0.
+ * Parses a whole, non-negative number. An empty string means 0.
+ * Separators are accepted only in real thousands positions, so a decimal comma
+ * such as "350,5" is rejected instead of silently becoming 3,505.
  * @param {string} raw
  * @returns {{ value: number } | { error: string }}
  */
 export function parseWhole(raw) {
-  const text = String(raw ?? '').replace(/[,\s]/g, '')
+  const text = String(raw ?? '').trim()
   if (text === '') return { value: 0 }
-  if (!/^\d+$/.test(text)) return { error: MESSAGES.notWhole }
-  return { value: Number(text) }
+  if (!WHOLE_NUMBER.test(text)) return { error: MESSAGES.notWhole }
+  return { value: Number(text.replace(/[, ]/g, '')) }
 }
 
 /**
