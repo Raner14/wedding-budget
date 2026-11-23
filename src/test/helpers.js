@@ -1,4 +1,4 @@
-import { BUDGET_STORAGE_KEY, LEGACY_BUDGET_STORAGE_KEY } from '../lib/budgetStorage.js'
+import { BUDGET_STORAGE_KEY, LEGACY_BUDGET_STORAGE_KEY, PREVIOUS_BUDGET_STORAGE_KEY } from '../lib/budgetStorage.js'
 
 // Built from char codes so the source stays ASCII-only (no invisible characters).
 const BIDI_MARKS = new RegExp(`[${String.fromCharCode(0x200e, 0x200f, 0x061c)}]`, 'g')
@@ -19,10 +19,19 @@ const SAMPLE_EXPENSES = [
   { id: 'flowers', name: 'עיצוב ופרחים', amount: '7,000' },
 ]
 
-/** The approved prototype's sample budgets (also covered by the budget.js regression tests). */
+/**
+ * The approved prototype's sample budgets (also covered by the budget.js regression tests).
+ * `loss` carries its old "10 prepaid reserve meals × ₪200" as an expense — what the migration
+ * notice offers — so its published numbers are unchanged. `legacyReserve` is the original v1
+ * input with those reserve meals, used by the migration tests.
+ */
 export const SAMPLES = {
   profit: { event: { invitedGuests: '300', attendanceRate: '85', mealPrice: '350', minimumMeals: '250', averageGift: '505' }, expenses: SAMPLE_EXPENSES },
-  loss: { event: { invitedGuests: '300', attendanceRate: '70', mealPrice: '380', minimumMeals: '250', reserveMeals: '10', reserveMealPrice: '200', averageGift: '450' }, expenses: SAMPLE_EXPENSES },
+  loss: {
+    event: { invitedGuests: '300', attendanceRate: '70', mealPrice: '380', minimumMeals: '250', averageGift: '450' },
+    expenses: [...SAMPLE_EXPENSES, { id: 'reserve', name: 'מנות רזרבה ששולמו מראש', amount: '2,000' }],
+  },
+  legacyReserve: { event: { invitedGuests: '300', attendanceRate: '70', mealPrice: '380', minimumMeals: '250', reserveMeals: '10', reserveMealPrice: '200', averageGift: '450' }, expenses: SAMPLE_EXPENSES },
   zero: { event: { invitedGuests: '0', attendanceRate: '85', mealPrice: '350', minimumMeals: '250', averageGift: '450' }, expenses: SAMPLE_EXPENSES },
 }
 
@@ -34,15 +43,23 @@ export function seedBudget({ event = {}, expenses = [] } = {}) {
   localStorage.setItem(LEGACY_BUDGET_STORAGE_KEY, JSON.stringify({ version: 1, event: { ...EVENT_DEFAULTS, ...event }, expenses }))
 }
 
-const EVENT_DEFAULTS_V2 = {
+const EVENT_DEFAULTS_CURRENT = {
   invitedGuests: '', attendanceRate: '85', mealPrice: '', minimumMeals: '', averageGift: '',
-  reserveModel: 'as-needed', reserveAvailable: '', reserveGuests: '', reserveMealPrice: '', reserveGift: '',
+  reserveAvailable: '', reserveGuests: '', reserveMealPrice: '', reserveGift: '',
 }
 
-/** Writes a budget in the current (version 2) format. */
-export function seedBudgetV2({ event = {}, expenses = [], familyGifts = { enabled: false, items: [] }, notices = { reserveMigrated: false } } = {}) {
+/** Writes a budget exactly as the version 2 site saved it (with a reserve billing model). */
+export function seedBudgetV2({ event = {}, expenses = [], familyGifts = { enabled: false, items: [] } } = {}) {
+  localStorage.setItem(
+    PREVIOUS_BUDGET_STORAGE_KEY,
+    JSON.stringify({ version: 2, event: { reserveModel: 'as-needed', ...EVENT_DEFAULTS_CURRENT, ...event }, expenses, familyGifts, notices: { reserveMigrated: false } }),
+  )
+}
+
+/** Writes a budget in the current (version 3) format. */
+export function seedBudgetCurrent({ event = {}, expenses = [], familyGifts = { enabled: false, items: [] }, notices = { prepaidReserve: null } } = {}) {
   localStorage.setItem(
     BUDGET_STORAGE_KEY,
-    JSON.stringify({ version: 2, event: { ...EVENT_DEFAULTS_V2, ...event }, expenses, familyGifts, notices }),
+    JSON.stringify({ version: 3, event: { ...EVENT_DEFAULTS_CURRENT, ...event }, expenses, familyGifts, notices }),
   )
 }

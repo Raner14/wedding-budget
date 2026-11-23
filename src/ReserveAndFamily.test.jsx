@@ -2,8 +2,8 @@ import { describe, expect, it } from 'vitest'
 import { fireEvent, screen, within } from '@testing-library/react'
 import userEvent from '@testing-library/user-event'
 import { renderApp } from './test/renderApp.jsx'
-import { normalize, SAMPLES, seedBudget, seedBudgetV2 } from './test/helpers.js'
-import { BUDGET_STORAGE_KEY, LEGACY_BUDGET_STORAGE_KEY } from './lib/budgetStorage.js'
+import { normalize, SAMPLES, seedBudget, seedBudgetCurrent, seedBudgetV2 } from './test/helpers.js'
+import { BUDGET_STORAGE_KEY, LEGACY_BUDGET_STORAGE_KEY, PREVIOUS_BUDGET_STORAGE_KEY } from './lib/budgetStorage.js'
 
 const EXPENSES = [{ id: 'all', name: 'הוצאות', amount: '30,000' }]
 // 300 invited × 70% = 210 guests; minimum 250 → 40 guaranteed meals paid but unused.
@@ -11,76 +11,89 @@ const BASE = { invitedGuests: '300', attendanceRate: '70', mealPrice: '380', min
 
 const balance = () => normalize(screen.getByTestId('balance').textContent)
 const summary = () => normalize(document.getElementById('summary').textContent)
-const explanation = () => normalize(document.querySelector('.reserve-explanation')?.textContent)
+const breakdown = () => normalize(document.querySelector('.reserve-breakdown')?.textContent)
 const attendingText = () => normalize(screen.getByText(/צפויים לחגוג איתכם/).closest('p').textContent)
 const stored = () => JSON.parse(localStorage.getItem(BUDGET_STORAGE_KEY))
+const reserveSection = () => screen.getByText('רזרבות').closest('details')
 
-describe('Reserve guests — model A (pay only for what is needed)', () => {
-  it('without reserve guests the result is unchanged', () => {
-    seedBudgetV2({ event: BASE, expenses: EXPENSES })
+describe('Reserves — simple UI', () => {
+  it('shows a titled section with only two primary fields and no billing model choice', async () => {
+    const user = userEvent.setup()
     renderApp()
-    expect(balance()).toContain('30,500') // 210×450 − (250×380 + 30,000)
+    const section = reserveSection()
+    expect(normalize(section.querySelector('summary').textContent)).toContain('משלמים רק על מי שמגיע')
+    await user.click(within(section).getByText('רזרבות'))
+    expect(screen.getByLabelText('כמה מקומות רזרבה?')).toBeTruthy()
+    expect(screen.getByLabelText('כמה צפויים להגיע?')).toBeTruthy()
+    expect(within(section).queryByRole('radio')).toBeNull()
+    // Overrides live under a collapsed "advanced settings".
+    expect(screen.getByText('הגדרות מתקדמות').closest('details').open).toBe(false)
   })
 
-  it('reserve guests fill unused guaranteed meals: more gifts, no extra meal cost', () => {
-    seedBudgetV2({ event: { ...BASE, reserveAvailable: '20', reserveGuests: '15' }, expenses: EXPENSES })
+  it('shows the regular meal price and average gift as the defaults of the overrides', () => {
+    seedBudgetCurrent({ event: { ...BASE, reserveAvailable: '10' }, expenses: EXPENSES })
+    renderApp()
+    expect(normalize(screen.getByLabelText('מחיר למנת רזרבה (₪)').getAttribute('placeholder'))).toBe('כמו מנה רגילה (380 ₪)')
+    expect(normalize(screen.getByLabelText('מתנה מאורח רזרבה (₪)').getAttribute('placeholder'))).toBe('כמו המתנה הממוצעת (450 ₪)')
+  })
+})
+
+describe('Reserves — only those who come are paid for', () => {
+  it('zero reserve attendees: no cost, no gifts, the balance is unchanged', () => {
+    seedBudgetCurrent({ event: { ...BASE, reserveAvailable: '20', reserveGuests: '0' }, expenses: EXPENSES })
+    renderApp()
+    expect(balance()).toContain('30,500') // 210×450 − (250×380 + 30,000), as without reserves
+    expect(screen.getByText('כל עוד אף אחד מהרזרבה לא מגיע, אין עלות נוספת ואין מתנות נוספות.')).toBeTruthy()
+  })
+
+  it('reserve guests first fill unused guaranteed meals: more gifts, no extra meal cost', () => {
+    seedBudgetCurrent({ event: { ...BASE, reserveAvailable: '20', reserveGuests: '15' }, expenses: EXPENSES })
     renderApp()
     expect(attendingText()).toContain('≈ 225 אורחים')
     expect(attendingText()).toContain('כולל 15 מהרזרבה')
-    expect(balance()).toContain('הפסד צפוי')
     expect(balance()).toContain('23,750') // 225×450 − 125,000
+    expect(breakdown()).toContain('עלות מנות רזרבה15 במנות מובטחות שכבר שולמו0 ₪')
+    expect(breakdown()).toContain('מתנות נוספות15 אורחים × 450 ₪6,750 ₪')
+    expect(breakdown()).toContain('תוספת למאזן6,750 ₪')
     expect(summary()).toContain('+ 15 אורחי רזרבה × 450')
-    expect(summary()).toContain('בגלל מינימום המנות תשלמו על 25 מנות שלא ינוצלו')
-    expect(explanation()).toContain('15 מהם במנות מובטחות שכבר שולמו')
-    expect(explanation()).toContain('בלי תשלום נוסף על מנות')
   })
 
-  it('charges only the meals beyond the paid commitment', () => {
-    seedBudgetV2({ event: { ...BASE, reserveAvailable: '60', reserveGuests: '50' }, expenses: EXPENSES })
+  it('charges only the meals beyond the paid commitment, and shows the net impact', () => {
+    seedBudgetCurrent({ event: { ...BASE, reserveAvailable: '60', reserveGuests: '50' }, expenses: EXPENSES })
     renderApp()
-    // 40 covered by the minimum, 10 charged × 380 = 3,800; income 260×450 = 117,000; cost 128,800.
+    // 40 covered by the minimum, 10 charged × 380 = 3,800; gifts 50 × 450 = 22,500 → +18,700.
     expect(balance()).toContain('11,800')
+    expect(breakdown()).toContain('10 מנות × 380 ₪ · 40 במנות מובטחות שכבר שולמו3,800 ₪')
+    expect(breakdown()).toContain('22,500')
+    expect(breakdown()).toContain('תוספת למאזן18,700 ₪')
     expect(summary()).toContain('250 מנות × 380 ₪ + 10 מנות רזרבה × 380')
-    expect(explanation()).toContain('10 מנות בתשלום נוסף (3,800')
   })
-})
 
-describe('Reserve guests — model B (prepaid reserve)', () => {
-  const PREPAID = { ...BASE, reserveModel: 'prepaid', reserveAvailable: '20', reserveMealPrice: '200' }
-
-  it('charges every prepaid reserve meal once, and reserve guests add gifts without a second charge', () => {
-    seedBudgetV2({ event: { ...PREPAID, reserveGuests: '15' }, expenses: EXPENSES })
+  it('uses overrides from the advanced settings, and can show a negative net impact', () => {
+    seedBudgetCurrent({ event: { ...BASE, minimumMeals: '', reserveAvailable: '10', reserveGuests: '10', reserveMealPrice: '500', reserveGift: '300' }, expenses: EXPENSES })
     renderApp()
-    // cost 95,000 + 20×200 + 30,000 = 129,000; income 225×450 = 101,250.
-    expect(balance()).toContain('27,750')
-    expect(summary()).toContain('20 מנות רזרבה ששולמו מראש × 200')
-    expect(summary()).toContain('5 מנות רזרבה ששולמו מראש לא ינוצלו (1,000')
-    expect(explanation()).toContain('20 מנות רזרבה ששולמו מראש (4,000')
+    expect(screen.getByText('הגדרות מתקדמות').closest('details').open).toBe(true)
+    // 10 × 500 = 5,000 cost; 10 × 300 = 3,000 gifts → −2,000.
+    expect(breakdown()).toContain('הפחתה מהמאזן2,000 ₪')
+    expect(document.querySelector('.rb-net').className).toContain('tone-loss')
   })
 
-  it('uses an overridden gift for reserve guests', () => {
-    seedBudgetV2({ event: { ...PREPAID, reserveGuests: '15', reserveGift: '300' }, expenses: EXPENSES })
-    renderApp()
-    expect(balance()).toContain('30,000') // 94,500 + 15×300 − 129,000
-    expect(summary()).toContain('+ 15 אורחי רזרבה × 300')
-  })
-
-  it('switching models changes the calculation immediately', async () => {
+  it('updates the breakdown live while typing', async () => {
     const user = userEvent.setup()
-    seedBudgetV2({ event: { ...PREPAID, reserveGuests: '15' }, expenses: EXPENSES })
+    seedBudgetCurrent({ event: { ...BASE, minimumMeals: '', reserveAvailable: '10' }, expenses: EXPENSES })
     renderApp()
-    await user.click(screen.getByRole('radio', { name: /משלמים רק על מה שצריך/ }))
-    expect(balance()).toContain('23,750') // reserve guests now sit in unused guaranteed meals
-    expect(stored().event.reserveModel).toBe('as-needed')
+    await user.type(screen.getByLabelText('כמה צפויים להגיע?'), '4')
+    expect(breakdown()).toContain('4 מנות × 380 ₪1,520 ₪')
+    expect(breakdown()).toContain('תוספת למאזן280 ₪') // 4×450 − 4×380
   })
 })
 
-describe('Reserve guests — validation and scenarios', () => {
+describe('Reserves — validation and scenarios', () => {
   it('flags more expected guests than reserve places and marks the summary outdated', async () => {
     const user = userEvent.setup()
-    seedBudgetV2({ event: { ...BASE, reserveAvailable: '10', reserveGuests: '5' }, expenses: EXPENSES })
+    seedBudgetCurrent({ event: { ...BASE, reserveAvailable: '10', reserveGuests: '5' }, expenses: EXPENSES })
     renderApp()
-    const guests = screen.getByLabelText('כמה מהם צפויים להגיע')
+    const guests = screen.getByLabelText('כמה צפויים להגיע?')
     await user.clear(guests)
     await user.type(guests, '12')
     expect(guests.getAttribute('aria-invalid')).toBe('true')
@@ -88,43 +101,82 @@ describe('Reserve guests — validation and scenarios', () => {
     expect(within(screen.getByTestId('balance')).getByText('לא מעודכן')).toBeTruthy()
   })
 
+  it('opens the advanced settings when an override is invalid', () => {
+    seedBudgetCurrent({ event: { ...BASE, reserveAvailable: '10', reserveMealPrice: '3x0' }, expenses: EXPENSES })
+    renderApp()
+    expect(screen.getByText('הגדרות מתקדמות').closest('details').open).toBe(true)
+    expect(screen.getByLabelText('מחיר למנת רזרבה (₪)').getAttribute('aria-invalid')).toBe('true')
+  })
+
   it('keeps reserve guests fixed in what-if scenarios and shows them in the hint', () => {
-    seedBudgetV2({ event: { ...BASE, reserveAvailable: '20', reserveGuests: '15' }, expenses: EXPENSES })
+    seedBudgetCurrent({ event: { ...BASE, reserveAvailable: '20', reserveGuests: '15' }, expenses: EXPENSES })
     renderApp()
     fireEvent.change(screen.getByLabelText('פחות אורחים מגיעים?'), { target: { value: '80' } })
-    const hint = normalize(document.getElementById('scenario-rate-hint').textContent)
-    expect(hint).toContain('≈ 240 אורחים מגיעים (מתוך 300) + 15 מהרזרבה')
-    // 240 base guests leave 10 of the 250 guaranteed meals spare: 10 reserve guests covered, 5 charged × 380.
-    expect(normalize(screen.getByTestId('scenario-balance').textContent)).toContain('12,150') // 255×450 − (95,000 + 1,900 + 30,000)
+    expect(normalize(document.getElementById('scenario-rate-hint').textContent)).toContain('≈ 240 אורחים מגיעים (מתוך 300) + 15 מהרזרבה')
+    // 240 base guests leave 10 spare guaranteed meals: 10 reserve guests covered, 5 charged × 380.
+    expect(normalize(screen.getByTestId('scenario-balance').textContent)).toContain('12,150')
   })
 })
 
-describe('Migration of saved budgets from the published site', () => {
-  it('shows the old reserve as prepaid with identical numbers, explains it once, and remembers the dismissal', async () => {
+describe('Migration of budgets saved by the published site', () => {
+  it('v1 reserve meals: explains the removed prepaid cost, and "add as expense" restores the old numbers', async () => {
     const user = userEvent.setup()
-    seedBudget(SAMPLES.loss) // v1: 10 reserve meals × 200
+    seedBudget(SAMPLES.legacyReserve) // v1: 10 reserve meals × 200
     const legacyBefore = localStorage.getItem(LEGACY_BUDGET_STORAGE_KEY)
-    const first = renderApp()
-    expect(balance()).toContain('32,500')
-    expect(screen.getByRole('radio', { name: /רזרבה ששולמה מראש/ }).checked).toBe(true)
-    expect(screen.getByLabelText('מקומות רזרבה').value).toBe('10')
-    expect(screen.getByLabelText('כמה מהם צפויים להגיע').value).toBe('')
-    await user.click(screen.getByRole('button', { name: 'הבנתי' }))
-    expect(screen.queryByText('עדכנו את חישוב הרזרבה')).toBeNull()
-    first.unmount()
-
     renderApp()
-    expect(screen.queryByText('עדכנו את חישוב הרזרבה')).toBeNull()
-    expect(balance()).toContain('32,500')
-    expect(localStorage.getItem(LEGACY_BUDGET_STORAGE_KEY)).toBe(legacyBefore) // legacy data untouched
+    expect(reserveSection().open).toBe(true)
+    expect(screen.getByText('שינינו את חישוב הרזרבות')).toBeTruthy()
+    const note = normalize(screen.getByText('שינינו את חישוב הרזרבות').closest('.alert').textContent)
+    expect(note).toContain('10 מנות רזרבה ששולמו מראש (2,000 ₪)')
+    expect(note).toContain('הוסיפו 2,000 ₪ כהוצאה')
+    expect(balance()).toContain('30,500') // without the old reserve cost
+    expect(screen.getByLabelText('כמה מקומות רזרבה?').value).toBe('10')
+
+    await user.click(screen.getByRole('button', { name: 'הוספה כהוצאה' }))
+    expect(balance()).toContain('32,500') // exactly as published
+    expect(screen.getByRole('textbox', { name: 'סכום עבור מנות רזרבה ששולמו מראש (₪)' }).value).toBe('2,000')
+    expect(screen.queryByText('שינינו את חישוב הרזרבות')).toBeNull()
+    expect(stored().notices.prepaidReserve).toBeNull()
+    expect(localStorage.getItem(LEGACY_BUDGET_STORAGE_KEY)).toBe(legacyBefore)
   })
 
-  it('shows no notice for budgets that had no reserve', () => {
+  it('"הבנתי, בלי הוצאה" closes the notice for good without adding anything', async () => {
+    const user = userEvent.setup()
+    seedBudget(SAMPLES.legacyReserve)
+    const first = renderApp()
+    await user.click(screen.getByRole('button', { name: 'הבנתי, בלי הוצאה' }))
+    expect(screen.queryByText('שינינו את חישוב הרזרבות')).toBeNull()
+    expect(balance()).toContain('30,500')
+    first.unmount()
+    renderApp()
+    expect(screen.queryByText('שינינו את חישוב הרזרבות')).toBeNull()
+  })
+
+  it('v2 prepaid reserve with guests: places and guests are kept, the notice offers the exact difference', () => {
+    // 270 base guests (90%), minimum 250: no spare guaranteed meals; 15 of 20 prepaid places used.
+    seedBudgetV2({ event: { ...BASE, attendanceRate: '90', reserveModel: 'prepaid', reserveAvailable: '20', reserveGuests: '15', reserveMealPrice: '200' }, expenses: EXPENSES })
+    const v2Before = localStorage.getItem(PREVIOUS_BUDGET_STORAGE_KEY)
+    renderApp()
+    expect(screen.getByLabelText('כמה צפויים להגיע?').value).toBe('15')
+    const note = normalize(screen.getByText('שינינו את חישוב הרזרבות').closest('.alert').textContent)
+    expect(note).toContain('20 מנות רזרבה ששולמו מראש (4,000 ₪)')
+    expect(note).toContain('הוסיפו 1,000 ₪ כהוצאה') // 4,000 − 15 × 200 already charged now
+    expect(localStorage.getItem(PREVIOUS_BUDGET_STORAGE_KEY)).toBe(v2Before)
+  })
+
+  it('v2 "as needed" budgets and budgets without reserves show no notice', () => {
+    seedBudgetV2({ event: { ...BASE, reserveAvailable: '20', reserveGuests: '15' }, expenses: EXPENSES })
+    renderApp()
+    expect(balance()).toContain('23,750')
+    expect(screen.queryByText('שינינו את חישוב הרזרבות')).toBeNull()
+  })
+
+  it('shows no notice for v1 budgets that had no reserve', () => {
     seedBudget(SAMPLES.profit)
     renderApp()
     expect(balance()).toContain('9,525')
-    expect(screen.queryByText('עדכנו את חישוב הרזרבה')).toBeNull()
-    expect(screen.getByText('אורחי רזרבה').closest('details').open).toBe(false)
+    expect(screen.queryByText('שינינו את חישוב הרזרבות')).toBeNull()
+    expect(reserveSection().open).toBe(false)
   })
 })
 

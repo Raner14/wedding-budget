@@ -12,7 +12,14 @@ import ExpensesList from '../components/calculator/ExpensesList.jsx'
 import BudgetSummary from '../components/calculator/BudgetSummary.jsx'
 import MobileBalanceBar from '../components/calculator/MobileBalanceBar.jsx'
 import WhatIfPanel from '../components/calculator/WhatIfPanel.jsx'
-import { actions, budgetReducer, createSuggestedFamilyGifts } from '../lib/budgetState.js'
+import {
+  actions,
+  budgetReducer,
+  createExpense,
+  createSuggestedFamilyGifts,
+  PREPAID_RESERVE_EXPENSE_NAME,
+} from '../lib/budgetState.js'
+import { formatNumber } from '../lib/format.js'
 import { loadBudget, saveBudget } from '../lib/budgetStorage.js'
 import { isStorageAvailable } from '../lib/safeStorage.js'
 import { parseBudget, parseWhole } from '../lib/validation.js'
@@ -58,6 +65,15 @@ export default function CalculatorPage() {
 
   function handleAddExpense(expense) {
     dispatch(actions.expenseAdded(expense))
+    setHighlightId(expense.id)
+  }
+
+  /** Migration notice: keep the old prepaid reserve cost as an explicit expense row. */
+  function handleAddPrepaidReserveExpense() {
+    const amount = notices.prepaidReserve?.suggestedExpense
+    if (!amount) return
+    const expense = { ...createExpense(), name: PREPAID_RESERVE_EXPENSE_NAME, amount: formatNumber(amount) }
+    dispatch(actions.prepaidReserveExpenseAdded(expense))
     setHighlightId(expense.id)
   }
 
@@ -109,9 +125,10 @@ export default function CalculatorPage() {
                 attending={attendingFrom(event, parsed)}
                 onFieldChange={(field, value) => dispatch(actions.fieldChanged(field, value))}
                 reserve={{
-                  info: parsed.eventResult && { ...parsed.eventResult, reserveModel: event.reserveModel },
-                  showMigrationNotice: notices.reserveMigrated,
+                  info: parsed.eventResult,
+                  notice: notices.prepaidReserve,
                   onDismissNotice: () => dispatch(actions.reserveNoticeDismissed()),
+                  onAddPrepaidExpense: handleAddPrepaidReserveExpense,
                 }}
                 family={{
                   familyGifts,

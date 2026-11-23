@@ -3,6 +3,7 @@ import { describe, expect, it } from 'vitest'
 import {
   MAX_EXPENSES,
   MAX_FAMILY_GIFTS,
+  PREPAID_RESERVE_EXPENSE_NAME,
   actions,
   budgetReducer,
   createDefaultExpenses,
@@ -140,22 +141,21 @@ describe('helpers', () => {
 
   it('toPersisted stores only versioned raw input, never derived values', () => {
     const s = fill(createInitialState(), { invitedGuests: '100' })
-    expect(toPersisted(s)).toEqual({ version: 2, event: s.event, expenses: s.expenses, familyGifts: s.familyGifts, notices: s.notices })
+    expect(toPersisted(s)).toEqual({ version: 3, event: s.event, expenses: s.expenses, familyGifts: s.familyGifts, notices: s.notices })
     expect(toPersisted(s)).not.toHaveProperty('lastValidValues')
   })
 })
 
 describe('budgetReducer — reserve fields', () => {
-  it('starts with no reserve and the "pay as needed" model', () => {
-    expect(createInitialState().event).toMatchObject({
-      reserveModel: 'as-needed', reserveAvailable: '', reserveGuests: '', reserveMealPrice: '', reserveGift: '',
-    })
+  it('starts with no reserve and no billing model', () => {
+    const { event } = createInitialState()
+    expect(event).toMatchObject({ reserveAvailable: '', reserveGuests: '', reserveMealPrice: '', reserveGift: '' })
+    expect(event).not.toHaveProperty('reserveModel')
   })
 
-  it('switches the billing model, and ignores unknown models', () => {
-    const s = budgetReducer(createInitialState(), actions.fieldChanged('reserveModel', 'prepaid'))
-    expect(s.event.reserveModel).toBe('prepaid')
-    expect(budgetReducer(s, actions.fieldChanged('reserveModel', 'free-food'))).toBe(s)
+  it('no longer accepts a billing model', () => {
+    const s = createInitialState()
+    expect(budgetReducer(s, actions.fieldChanged('reserveModel', 'prepaid'))).toBe(s)
   })
 
   it('reserve guests change the last valid values', () => {
@@ -163,11 +163,24 @@ describe('budgetReducer — reserve fields', () => {
     expect(s.lastValidValues).toMatchObject({ reserveAvailable: 10, reserveGuests: 4 })
   })
 
-  it('dismisses the migration notice once', () => {
-    const migrated = createInitialState({ ...createInitialState(), notices: { reserveMigrated: true } })
+  const notice = { meals: '10', previousCost: 2000, suggestedExpense: 2000 }
+  const withNotice = () => createInitialState({ ...createInitialState(), notices: { prepaidReserve: notice } })
+
+  it('dismisses the prepaid-reserve notice once, without adding anything', () => {
+    const migrated = withNotice()
     const dismissed = budgetReducer(migrated, actions.reserveNoticeDismissed())
-    expect(dismissed.notices.reserveMigrated).toBe(false)
+    expect(dismissed.notices.prepaidReserve).toBeNull()
+    expect(dismissed.expenses).toEqual(migrated.expenses)
     expect(budgetReducer(dismissed, actions.reserveNoticeDismissed())).toBe(dismissed)
+  })
+
+  it('can keep the old prepaid reserve cost as an expense, closing the notice', () => {
+    const expense = { id: 'pr', name: PREPAID_RESERVE_EXPENSE_NAME, amount: '2,000' }
+    const s = budgetReducer(withNotice(), actions.prepaidReserveExpenseAdded(expense))
+    expect(s.expenses.at(-1)).toEqual(expense)
+    expect(s.notices.prepaidReserve).toBeNull()
+    // Only once: without a pending notice the action does nothing.
+    expect(budgetReducer(s, actions.prepaidReserveExpenseAdded({ ...expense, id: 'again' }))).toBe(s)
   })
 })
 

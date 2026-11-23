@@ -15,7 +15,6 @@ function makeValues(overrides = {}) {
     mealPrice: 0,
     minimumMeals: 0,
     averageGift: 0,
-    reserveModel: 'as-needed',
     reserveAvailable: 0,
     reserveGuests: 0,
     reserveMealPrice: null,
@@ -35,16 +34,15 @@ function deepFreeze(obj) {
   return Object.freeze(obj)
 }
 
-// The approved prototype's samples. LOSS_SAMPLE is the migrated form of the old
-// "10 reserve meals × ₪200" input: prepaid reserve, no extra guests.
+// The approved prototype's samples. LOSS_SAMPLE keeps the old "10 prepaid reserve meals × ₪200"
+// as an expense — exactly what the migration notice offers — so every number is unchanged.
 const PROFIT_SAMPLE = makeValues({
   invitedGuests: 300, attendanceRate: 85, mealPrice: 350, minimumMeals: 250,
   averageGift: 505, expenses: expenses(6000, 9000, 8000, 7000),
 })
 const LOSS_SAMPLE = makeValues({
   invitedGuests: 300, attendanceRate: 70, mealPrice: 380, minimumMeals: 250,
-  reserveModel: 'prepaid', reserveAvailable: 10, reserveMealPrice: 200,
-  averageGift: 450, expenses: expenses(6000, 9000, 8000, 7000),
+  averageGift: 450, expenses: expenses(6000, 9000, 8000, 7000, 2000),
 })
 
 describe('calculateBudget — regression against the approved samples (features off)', () => {
@@ -62,13 +60,12 @@ describe('calculateBudget — regression against the approved samples (features 
     expect(r.costPerAttendee).toBeCloseTo(119_250 / 255, 10)
   })
 
-  it('loss sample with guaranteed minimum and prepaid reserve meals (old reserve input)', () => {
+  it('loss sample with a guaranteed minimum (old prepaid reserve kept as an expense)', () => {
     const r = calculateBudget(LOSS_SAMPLE)
     expect(r).toMatchObject({
       baseGuests: 210, attendingGuests: 210, mainMeals: 250, unusedMeals: 40,
-      reserveMealsBilled: 10, unusedReserveMeals: 10,
-      mealsCost: 95_000, reserveCost: 2_000, venueCost: 97_000,
-      totalCost: 127_000, totalIncome: 94_500,
+      reserveMealsBilled: 0, mealsCost: 95_000, reserveCost: 0, venueCost: 95_000,
+      additionalCost: 32_000, totalCost: 127_000, totalIncome: 94_500,
       balance: -32_500, balanceStatus: 'loss',
       breakEvenGift: 605,
       breakEvenMealPrice: { status: 'ok', value: 250 },
@@ -92,11 +89,24 @@ describe('minimum guaranteed meals', () => {
   })
 })
 
-describe('reserve guests — model A: pay only for meals actually needed', () => {
+describe('reserve guests — only those who come are paid for', () => {
   // 100 guests expected, minimum 120 → 20 guaranteed meals are paid but unused.
   const base = makeValues({
     invitedGuests: 100, attendanceRate: 100, mealPrice: 300, minimumMeals: 120, averageGift: 400,
-    reserveModel: 'as-needed', reserveAvailable: 40,
+    reserveAvailable: 40,
+  })
+
+  it('zero reserve guests → zero reserve cost and zero reserve gifts', () => {
+    const r = calculateBudget({ ...base, reserveGuests: 0 })
+    expect(r).toMatchObject({ reserveGuests: 0, reserveMealsBilled: 0, reserveCost: 0, reserveGiftIncome: 0, reserveNetImpact: 0 })
+    expect(r.balance).toBe(calculateBudget({ ...base, reserveAvailable: 0 }).balance)
+  })
+
+  it('reports the gifts and the net impact of reserve guests', () => {
+    const r = calculateBudget({ ...base, minimumMeals: 0, reserveGuests: 10, reserveMealPrice: 250 })
+    expect(r).toMatchObject({ reserveCost: 2_500, reserveGiftIncome: 4_000, reserveNetImpact: 1_500 })
+    const without = calculateBudget({ ...base, minimumMeals: 0, reserveGuests: 0 })
+    expect(r.balance - without.balance).toBe(r.reserveNetImpact)
   })
 
   it('reserve guests use unused guaranteed meals first — no extra charge', () => {
@@ -131,39 +141,7 @@ describe('reserve guests — model A: pay only for meals actually needed', () =>
   it('costs nothing when no reserve guests are expected, however many places exist', () => {
     const r = calculateBudget({ ...base, reserveGuests: 0, reserveAvailable: 500 })
     expect(r.reserveCost).toBe(0)
-    expect(r.unusedReserveMeals).toBe(0)
-  })
-})
-
-describe('reserve guests — model B: prepaid reserve meals', () => {
-  const base = makeValues({
-    invitedGuests: 100, attendanceRate: 100, mealPrice: 300, minimumMeals: 0, averageGift: 400,
-    reserveModel: 'prepaid', reserveAvailable: 20, reserveMealPrice: 250,
-  })
-
-  it('charges all prepaid reserve meals once, even when unused', () => {
-    const r = calculateBudget({ ...base, reserveGuests: 0 })
-    expect(r).toMatchObject({ reserveMealsBilled: 20, reserveCost: 5_000, unusedReserveMeals: 20, attendingGuests: 100 })
-  })
-
-  it('reserve guests use the prepaid meals without a second charge', () => {
-    const r = calculateBudget({ ...base, reserveGuests: 12 })
-    expect(r).toMatchObject({
-      attendingGuests: 112, reserveMealsBilled: 20, reserveCost: 5_000, unusedReserveMeals: 8,
-      guestGiftIncome: 112 * 400,
-    })
-  })
-
-  it('never double-counts with a guaranteed minimum', () => {
-    const r = calculateBudget({ ...base, minimumMeals: 110, reserveGuests: 12 })
-    // 110 guaranteed (10 unused by base guests) + 20 prepaid; reserve guests sit in prepaid meals.
-    expect(r).toMatchObject({ mainMeals: 110, unusedMeals: 10, reserveMealsBilled: 20, unusedReserveMeals: 8 })
-    expect(r.venueCost).toBe(110 * 300 + 20 * 250)
-  })
-
-  it('defensively bills reserve guests beyond the prepaid places as needed', () => {
-    const r = calculateBudget({ ...base, minimumMeals: 105, reserveGuests: 30 }) // 10 more than prepaid
-    expect(r).toMatchObject({ reserveMealsBilled: 25, coveredByGuaranteed: 5, unusedReserveMeals: 0 })
+    expect(r.reserveGiftIncome).toBe(0)
   })
 })
 
@@ -298,7 +276,6 @@ describe('properties over many deterministic random budgets (R6, R7, no double c
       mealPrice: int(600),
       minimumMeals: rand() < 0.5 ? 0 : int(400),
       averageGift: int(1000),
-      reserveModel: rand() < 0.5 ? 'as-needed' : 'prepaid',
       reserveAvailable,
       reserveGuests: int(reserveAvailable),
       reserveMealPrice: maybe(0.5, int(600)),
@@ -313,7 +290,9 @@ describe('properties over many deterministic random budgets (R6, R7, no double c
     for (const v of cases) {
       const r = calculateBudget(v)
       const paidMeals = r.mainMeals + r.reserveMealsBilled
-      expect(paidMeals - r.unusedMeals - r.unusedReserveMeals).toBe(r.attendingGuests)
+      expect(paidMeals - r.unusedMeals).toBe(r.attendingGuests)
+      expect(r.reserveMealsBilled).toBeLessThanOrEqual(r.reserveGuests) // never billed for absent reserve guests
+      expect(r.balance - calculateBudget({ ...v, reserveGuests: 0 }).balance).toBe(r.reserveNetImpact)
       expect(r.venueCost).toBe(r.mainMeals * v.mealPrice + r.reserveMealsBilled * (v.reserveMealPrice ?? v.mealPrice))
       expect(r.totalIncome).toBe(r.guestGiftIncome + r.familyGiftIncome)
     }
@@ -369,11 +348,12 @@ describe('applyScenario', () => {
   })
 
   it('applies the meal price change to the regular AND the reserve meal price', () => {
-    const s = applyScenario(LOSS_SAMPLE, { ...neutral, mealPriceChangePct: 10 })
+    const v = { ...LOSS_SAMPLE, minimumMeals: 0, reserveAvailable: 10, reserveGuests: 10, reserveMealPrice: 200 }
+    const s = applyScenario(v, { ...neutral, mealPriceChangePct: 10 })
     expect(s.mealPrice).toBe(418)
     expect(s.reserveMealPrice).toBe(220)
     const r = calculateBudget(s)
-    expect(r.mealsCost).toBe(250 * 418)
+    expect(r.mealsCost).toBe(210 * 418)
     expect(r.reserveCost).toBe(10 * 220)
   })
 

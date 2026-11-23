@@ -10,10 +10,10 @@ const LABELS = {
   rate: 'אחוז הגעה צפוי (%)',
   mealPrice: 'מחיר למנה (₪)',
   minimum: 'מינימום מנות מובטח',
-  reservePlaces: 'מקומות רזרבה',
-  reserveGuests: 'כמה מהם צפויים להגיע',
+  reservePlaces: 'כמה מקומות רזרבה?',
+  reserveGuests: 'כמה צפויים להגיע?',
   reservePrice: 'מחיר למנת רזרבה (₪)',
-  reserveGift: 'מתנה ממוצעת מאורח רזרבה (₪)',
+  reserveGift: 'מתנה מאורח רזרבה (₪)',
   gift: 'מתנה ממוצעת לאורח מגיע (₪)',
 }
 
@@ -86,18 +86,19 @@ describe('Event details form', () => {
     expect(rate.value).toBe('90')
   })
 
-  it('keeps reserve guests collapsed by default and open while a reserve field is invalid', async () => {
+  it('keeps reserves collapsed by default and open while a reserve field is invalid', async () => {
     const user = userEvent.setup()
     renderApp()
-    const details = screen.getByText('אורחי רזרבה').closest('details')
+    const details = screen.getByText('רזרבות').closest('details')
     expect(details.open).toBe(false)
-    await user.click(within(details).getByText('אורחי רזרבה'))
+    expect(normalize(details.querySelector('summary').textContent)).toContain('משלמים רק על מי שמגיע')
+    await user.click(within(details).getByText('רזרבות'))
     expect(details.open).toBe(true)
     await user.type(screen.getByLabelText(LABELS.reservePlaces), '5')
     await user.type(screen.getByLabelText(LABELS.reserveGuests), '8')
     expect(screen.getByText('לא יותר ממספר מקומות הרזרבה (5)')).toBeTruthy()
     // Trying to collapse while there is an error keeps it open.
-    await user.click(within(details).getByText('אורחי רזרבה'))
+    await user.click(within(details).getByText('רזרבות'))
     expect(details.open).toBe(true)
   })
 
@@ -106,7 +107,7 @@ describe('Event details form', () => {
     renderApp()
     await user.type(screen.getByLabelText(LABELS.invited), '300')
     await user.type(screen.getByLabelText(LABELS.gift), '450')
-    expect(stored()).toMatchObject({ version: 2, event: { invitedGuests: '300', averageGift: '450' } })
+    expect(stored()).toMatchObject({ version: 3, event: { invitedGuests: '300', averageGift: '450' } })
   })
 
   it('restores the saved form after a reload', async () => {
@@ -115,15 +116,16 @@ describe('Event details form', () => {
     await user.type(screen.getByLabelText(LABELS.invited), '300')
     await user.type(screen.getByLabelText(LABELS.reservePlaces), '10')
     await user.type(screen.getByLabelText(LABELS.reserveGuests), '4')
+    await user.click(screen.getByText('הגדרות מתקדמות'))
     await user.type(screen.getByLabelText(LABELS.reservePrice), '200')
-    await user.click(screen.getByRole('radio', { name: /רזרבה ששולמה מראש/ }))
     first.unmount()
 
     renderApp()
     expect(screen.getByLabelText(LABELS.invited).value).toBe('300')
     expect(screen.getByLabelText(LABELS.reservePrice).value).toBe('200')
-    expect(screen.getByRole('radio', { name: /רזרבה ששולמה מראש/ }).checked).toBe(true)
-    expect(screen.getByText('אורחי רזרבה').closest('details').open).toBe(true)
+    expect(screen.queryByRole('radio')).toBeNull() // no billing model selector any more
+    expect(screen.getByText('רזרבות').closest('details').open).toBe(true)
+    expect(screen.getByText('הגדרות מתקדמות').closest('details').open).toBe(true) // an override is set
     expect(attendingText()).toContain('259') // 255 + 4 reserve guests
     expect(attendingText()).toContain('כולל 4 מהרזרבה')
   })

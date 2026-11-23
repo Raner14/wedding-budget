@@ -4,11 +4,13 @@
  * validation is NOT done here — an invalid but well-formed value such as "12א"
  * is restored as typed so the user sees the field error instead of silent loss.
  *
- * Storage keys:
- *  - `wedding-budget:v2` (current) — written on every change.
- *  - `wedding-budget:v1` (legacy)  — read once if v2 is missing, then migrated.
- *    It is never written or deleted, so an older version of the site (e.g. a
- *    rollback) still finds the user's original data untouched.
+ * Storage keys (newest first):
+ *  - `wedding-budget:v3` (current)  — written on every change.
+ *  - `wedding-budget:v2` (previous) — reserve billing models "as needed" / "prepaid".
+ *  - `wedding-budget:v1` (legacy)   — cost-only "reserve meals".
+ * Older keys are read once (only when no newer data exists) and migrated. They are
+ * never written or deleted, so an older version of the site (e.g. a rollback) still
+ * finds the user's data exactly as it left it.
  */
 import { readJSON, writeJSON } from './safeStorage.js'
 import {
@@ -24,15 +26,18 @@ import {
   STATE_VERSION,
   toPersisted,
 } from './budgetState.js'
-import { EVENT_FIELDS, MAX_EXPENSE_NAME_LENGTH, MAX_FAMILY_LABEL_LENGTH, RESERVE_MODELS } from './validation.js'
+import { EVENT_FIELDS, MAX_EXPENSE_NAME_LENGTH, MAX_FAMILY_LABEL_LENGTH, parseBudget, parseWhole } from './validation.js'
 
-export const BUDGET_STORAGE_KEY = 'wedding-budget:v2'
+export const BUDGET_STORAGE_KEY = 'wedding-budget:v3'
+export const PREVIOUS_BUDGET_STORAGE_KEY = 'wedding-budget:v2'
 export const LEGACY_BUDGET_STORAGE_KEY = 'wedding-budget:v1'
 const MAX_VALUE_LENGTH = 20
 const MAX_ID_LENGTH = 64
+const MAX_STORED_AMOUNT = 100_000_000_000
 
 const isObject = (v) => typeof v === 'object' && v !== null && !Array.isArray(v)
 const str = (v, max, fallback) => (typeof v === 'string' ? v.slice(0, max) : fallback)
+const amountOrNull = (v) => (Number.isInteger(v) && v >= 0 && v <= MAX_STORED_AMOUNT ? v : null)
 
 /** Sanitizes a list of `{ id, <nameKey>, amount }` rows, repairing missing/duplicate IDs. */
 function sanitizeRows(list, { max, nameKey, nameMax, makeId }) {
@@ -51,82 +56,133 @@ function sanitizeRows(list, { max, nameKey, nameMax, makeId }) {
 const sanitizeExpenses = (list) =>
   sanitizeRows(list, { max: MAX_EXPENSES, nameKey: 'name', nameMax: MAX_EXPENSE_NAME_LENGTH, makeId: () => createExpense().id })
 
-/**
- * Current format (version 2).
- * @param {unknown} data
- * @returns {{ event: object, expenses: object[], familyGifts: object, notices: object } | null}
- */
-export function sanitizeBudget(data) {
-  if (!isObject(data) || data.version !== STATE_VERSION) return null
-
-  const defaults = createDefaultEvent()
-  const stored = isObject(data.event) ? data.event : {}
-  const event = {}
-  for (const field of EVENT_FIELDS) event[field] = str(stored[field], MAX_VALUE_LENGTH, defaults[field])
-  event.reserveModel = RESERVE_MODELS.includes(stored.reserveModel) ? stored.reserveModel : defaults.reserveModel
-
-  const family = isObject(data.familyGifts) ? data.familyGifts : {}
-  const familyGifts = {
+function sanitizeFamilyGifts(data) {
+  const family = isObject(data) ? data : {}
+  return {
     enabled: family.enabled === true,
     items: sanitizeRows(family.items, {
       max: MAX_FAMILY_GIFTS, nameKey: 'label', nameMax: MAX_FAMILY_LABEL_LENGTH, makeId: () => createFamilyGift().id,
     }),
   }
-  const notices = { reserveMigrated: isObject(data.notices) && data.notices.reserveMigrated === true }
+}
 
-  return { event, expenses: sanitizeExpenses(data.expenses), familyGifts, notices }
+/** Event fields of the current format, from any stored event object (unknown keys dropped). */
+function sanitizeEvent(stored) {
+  const defaults = createDefaultEvent()
+  const source = isObject(stored) ? stored : {}
+  const event = {}
+  for (const field of EVENT_FIELDS) event[field] = str(source[field], MAX_VALUE_LENGTH, defaults[field])
+  return event
+}
+
+function sanitizeNotice(notice) {
+  if (!isObject(notice)) return null
+  return {
+    meals: str(notice.meals, MAX_VALUE_LENGTH, ''),
+    previousCost: amountOrNull(notice.previousCost),
+    suggestedExpense: amountOrNull(notice.suggestedExpense),
+  }
 }
 
 /**
- * Legacy format (version 1) → version 2.
- *
- * Version 1 had `reserveMeals` × `reserveMealPrice`: extra meals the couple expected
- * to pay for, with no extra guests and no extra gifts. That is exactly a PREPAID
- * reserve with zero reserve guests, so every result stays identical. A one-time notice
- * tells the user how their reserve was carried over. All other fields are kept as typed.
- *
+ * Current format (version 3).
  * @param {unknown} data
  * @returns {{ event: object, expenses: object[], familyGifts: object, notices: object } | null}
  */
+export function sanitizeBudget(data) {
+  if (!isObject(data) || data.version !== STATE_VERSION) return null
+  return {
+    event: sanitizeEvent(data.event),
+    expenses: sanitizeExpenses(data.expenses),
+    familyGifts: sanitizeFamilyGifts(data.familyGifts),
+    notices: { prepaidReserve: sanitizeNotice(isObject(data.notices) ? data.notices.prepaidReserve : null) },
+  }
+}
+
+/**
+ * Prepaid reserve meals no longer exist: only reserve guests who come are paid for.
+ * Everything the user entered is kept; for the explanation we compute what the prepaid
+ * meals used to cost and the expense that would restore the previous balance exactly
+ * (previous cost − what the new rules already charge). Both are null when the stored
+ * values are not valid numbers.
+ *
+ * @param {object} migrated  The data already converted to the current shape.
+ * @param {string} meals     Stored number of prepaid reserve meals (raw string).
+ */
+function withPrepaidReserveNotice(migrated, meals) {
+  const parsed = parseBudget(migrated)
+  const count = parseWhole(meals)
+  let previousCost = null
+  let suggestedExpense = null
+  if (parsed.eventResult && 'value' in count) {
+    previousCost = count.value * parsed.eventResult.reserveMealPrice
+    suggestedExpense = Math.max(0, previousCost - parsed.eventResult.reserveCost)
+  }
+  return { ...migrated, notices: { prepaidReserve: { meals, previousCost, suggestedExpense } } }
+}
+
+const hasReserveMeals = (raw) => raw.trim() !== '' && raw.trim() !== '0'
+
+/**
+ * Previous format (version 2): drops the billing model. "As needed" budgets are unchanged;
+ * "prepaid" budgets keep their reserve places and guests and get the explanation notice.
+ * @param {unknown} data
+ */
+export function migratePreviousBudget(data) {
+  if (!isObject(data) || data.version !== 2) return null
+  const migrated = {
+    event: sanitizeEvent(data.event),
+    expenses: sanitizeExpenses(data.expenses),
+    familyGifts: sanitizeFamilyGifts(data.familyGifts),
+    notices: createDefaultNotices(),
+  }
+  const stored = isObject(data.event) ? data.event : {}
+  return stored.reserveModel === 'prepaid' && hasReserveMeals(migrated.event.reserveAvailable)
+    ? withPrepaidReserveNotice(migrated, migrated.event.reserveAvailable)
+    : migrated
+}
+
+/**
+ * Legacy format (version 1): `reserveMeals` × `reserveMealPrice` were extra meals the
+ * couple expected to pay for, with no extra guests — i.e. prepaid reserve meals. They
+ * become reserve places (with no expected guests yet) plus the explanation notice.
+ * @param {unknown} data
+ */
 export function migrateLegacyBudget(data) {
   if (!isObject(data) || data.version !== 1) return null
-  const defaults = createDefaultEvent()
   const stored = isObject(data.event) ? data.event : {}
-  const keep = (field) => str(stored[field], MAX_VALUE_LENGTH, defaults[field] ?? '')
-
-  const reserveMeals = keep('reserveMeals') // no v2 default: missing → ''
-  const hadReserve = reserveMeals.trim() !== '' && reserveMeals.trim() !== '0'
-  const event = {
-    ...defaults,
-    invitedGuests: keep('invitedGuests'),
-    attendanceRate: keep('attendanceRate'),
-    mealPrice: keep('mealPrice'),
-    minimumMeals: keep('minimumMeals'),
-    averageGift: keep('averageGift'),
-    reserveModel: hadReserve ? 'prepaid' : defaults.reserveModel,
-    reserveAvailable: hadReserve ? reserveMeals : '',
-    reserveGuests: '',
-    reserveMealPrice: hadReserve ? keep('reserveMealPrice') : '',
-    reserveGift: '',
-  }
-  return {
-    event,
+  const keep = (field) => str(stored[field], MAX_VALUE_LENGTH, '')
+  const defaults = createDefaultEvent()
+  const reserveMeals = keep('reserveMeals')
+  const hadReserve = hasReserveMeals(reserveMeals)
+  const migrated = {
+    event: {
+      ...defaults,
+      invitedGuests: keep('invitedGuests'),
+      attendanceRate: str(stored.attendanceRate, MAX_VALUE_LENGTH, defaults.attendanceRate),
+      mealPrice: keep('mealPrice'),
+      minimumMeals: keep('minimumMeals'),
+      averageGift: keep('averageGift'),
+      reserveAvailable: hadReserve ? reserveMeals : '',
+      reserveMealPrice: hadReserve ? keep('reserveMealPrice') : '',
+    },
     expenses: sanitizeExpenses(data.expenses),
     familyGifts: createDefaultFamilyGifts(),
-    notices: { ...createDefaultNotices(), reserveMigrated: hadReserve },
+    notices: createDefaultNotices(),
   }
+  return hadReserve ? withPrepaidReserveNotice(migrated, reserveMeals) : migrated
 }
 
-/** Lazy initializer for useReducer: current data, else migrated legacy data, else defaults. */
+/** Lazy initializer for useReducer: newest stored data, migrating older formats once. */
 export function loadBudget() {
-  const current = sanitizeBudget(readJSON(BUDGET_STORAGE_KEY))
-  if (current) return createInitialState(current)
-  const legacy = migrateLegacyBudget(readJSON(LEGACY_BUDGET_STORAGE_KEY))
-  if (legacy) return createInitialState(legacy)
-  return createInitialState({ event: createDefaultEvent(), expenses: createDefaultExpenses() })
+  const data =
+    sanitizeBudget(readJSON(BUDGET_STORAGE_KEY)) ??
+    migratePreviousBudget(readJSON(PREVIOUS_BUDGET_STORAGE_KEY)) ??
+    migrateLegacyBudget(readJSON(LEGACY_BUDGET_STORAGE_KEY))
+  return createInitialState(data ?? { event: createDefaultEvent(), expenses: createDefaultExpenses() })
 }
 
-/** Writes the current format only; the legacy key is never modified. @returns {boolean} */
+/** Writes the current format only; older keys are never modified. @returns {boolean} */
 export function saveBudget(state) {
   return writeJSON(BUDGET_STORAGE_KEY, toPersisted(state))
 }

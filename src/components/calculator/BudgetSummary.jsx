@@ -117,7 +117,6 @@ export default function BudgetSummary({ parsed, lastValidValues }) {
   )
 
   const maxBar = result ? Math.max(result.totalCost, result.totalIncome) : 0
-  const prepaidReserve = view.values?.reserveModel === 'prepaid'
   const barWidth = (value) => (maxBar ? `${(value / maxBar) * 100}%` : '0%')
 
   return (
@@ -199,7 +198,7 @@ export default function BudgetSummary({ parsed, lastValidValues }) {
                   <span className="bd-sub">
                     {formatNumber(result.mainMeals)} מנות × {formatMoney(view.values.mealPrice)}
                     {result.reserveMealsBilled > 0 &&
-                      ` + ${formatNumber(result.reserveMealsBilled)} ${prepaidReserve ? 'מנות רזרבה ששולמו מראש' : 'מנות רזרבה'} × ${formatMoney(result.reserveMealPrice)}`}
+                      ` + ${formatNumber(result.reserveMealsBilled)} מנות רזרבה × ${formatMoney(result.reserveMealPrice)}`}
                   </span>
                 </dt>
                 <dd><AnimatedMoney value={result.venueCost} /></dd>
@@ -210,20 +209,10 @@ export default function BudgetSummary({ parsed, lastValidValues }) {
               </div>
             </dl>
 
-            {(result.unusedMeals > 0 || result.unusedReserveMeals > 0) && (
+            {result.unusedMeals > 0 && (
               <div className="alert alert-info">
                 <Icon name="info" strokeWidth={2} />
-                <div>
-                  {result.unusedMeals > 0 && (
-                    <p>בגלל מינימום המנות תשלמו על {formatNumber(result.unusedMeals)} מנות שלא ינוצלו ({formatMoney(result.unusedMeals * view.values.mealPrice)}).</p>
-                  )}
-                  {result.unusedReserveMeals > 0 && (
-                    <p>
-                      {formatNumber(result.unusedReserveMeals)} מנות רזרבה ששולמו מראש לא ינוצלו (
-                      {formatMoney(result.unusedReserveMeals * result.reserveMealPrice)}).
-                    </p>
-                  )}
-                </div>
+                <p>בגלל מינימום המנות תשלמו על {formatNumber(result.unusedMeals)} מנות שלא ינוצלו ({formatMoney(result.unusedMeals * view.values.mealPrice)}).</p>
               </div>
             )}
 

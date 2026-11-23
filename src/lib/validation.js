@@ -12,7 +12,6 @@ export const MAX_COUNT = 5_000
 export const MAX_MONEY = 10_000_000
 export const MAX_EXPENSE_NAME_LENGTH = 60
 export const MAX_FAMILY_LABEL_LENGTH = 60
-export const RESERVE_MODELS = ['as-needed', 'prepaid']
 
 export const MESSAGES = {
   notWhole: 'יש להזין מספר שלם, למשל 15,000',
@@ -44,8 +43,6 @@ export const EVENT_FIELD_RULES = {
 }
 
 export const EVENT_FIELDS = Object.keys(EVENT_FIELD_RULES)
-/** Every editable event field: the numeric ones plus the reserve billing model. */
-export const EVENT_KEYS = [...EVENT_FIELDS, 'reserveModel']
 
 /** Plain digits, or digits with correctly placed thousands separators ("15,000", "1 234 567"). */
 const WHOLE_NUMBER = /^(?:\d+|\d{1,3}(?:,\d{3})+|\d{1,3}(?: \d{3})+)$/
@@ -151,7 +148,6 @@ export function parseBudget(state) {
     else values[field] = parsed.value
     if (errors.event[field]) errorCount++
   }
-  values.reserveModel = RESERVE_MODELS.includes(state.event.reserveModel) ? state.event.reserveModel : RESERVE_MODELS[0]
 
   const reserveCountsValid = !errors.event.reserveAvailable && !errors.event.reserveGuests
   if (reserveCountsValid && values.reserveGuests > values.reserveAvailable) {

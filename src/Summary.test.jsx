@@ -28,7 +28,7 @@ describe('Budget summary — results', () => {
     expect(text).toContain('הערכה בלבד')
   })
 
-  it('shows the loss sample with minimum and reserve meals', () => {
+  it('shows the loss sample with a guaranteed minimum', () => {
     seedBudget(SAMPLES.loss)
     renderApp()
     expect(balance().className).toContain('tone-loss')
@@ -39,10 +39,7 @@ describe('Budget summary — results', () => {
     expect(text).toContain('127,000')
     expect(text).toContain('94,500')
     expect(text).toContain('250 מנות × 380')
-    expect(text).toContain('10 מנות רזרבה ששולמו מראש × 200')
-    expect(text).toContain('10 מנות רזרבה ששולמו מראש לא ינוצלו (2,000')
-    // The migrated old reserve is explained once to the user.
-    expect(screen.getByText('עדכנו את חישוב הרזרבה')).toBeTruthy()
+    expect(text).toContain('32,000') // additional expenses, incl. the old reserve as an expense
     expect(text).toContain('בגלל מינימום המנות תשלמו על 40 מנות שלא ינוצלו (15,200')
     expect(text).toContain('605')
     expect(text).toContain('חסרים 155 ₪ לאורח')
@@ -135,9 +132,9 @@ describe('Budget summary — empty, error and outdated states', () => {
     const user = userEvent.setup()
     seedBudget({ ...SAMPLES.profit, event: { ...SAMPLES.profit.event, reserveMeals: 'x' } })
     renderApp()
-    const details = screen.getByText('אורחי רזרבה').closest('details')
+    const details = screen.getByText('רזרבות').closest('details')
     await user.click(summary().getByRole('button', { name: 'מעבר לשדה הראשון לתיקון' }))
-    expect(document.activeElement).toBe(screen.getByLabelText('מקומות רזרבה'))
+    expect(document.activeElement).toBe(screen.getByLabelText('כמה מקומות רזרבה?'))
     expect(details.open).toBe(true)
   })
 })

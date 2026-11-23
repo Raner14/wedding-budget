@@ -38,26 +38,27 @@
 /* Optional sections nested inside a field grid (family gifts) */
 .optional-section .fields { margin-top: 4px; }
 .computed-note { font-weight: 400; color: var(--sage-700); }
-.reserve-explanation { margin-top: 2px; }
+/* Section title with a subtitle line */
+.summary-text { display: grid; gap: 1px; }
+.summary-subtitle { font-size: 13px; font-weight: 400; color: var(--sage-700); }
 
-/* Reserve billing model: two radio "cards" */
-.event-card .model-picker { border: 0; margin: 0 0 16px; padding: 0; min-width: 0; }
-.event-card .model-picker legend { display: block; width: auto; margin-bottom: 10px; font-size: 14px; font-weight: 500; color: var(--ink); }
-.event-card .model-picker legend::after { display: none; }
-.model-options { display: grid; gap: 10px; }
-.model-option {
-  position: relative; display: flex; align-items: flex-start; gap: 10px; padding: 12px 14px; cursor: pointer;
-  border: 1px solid var(--input-border); border-radius: 16px; background: #FFFEFC;
-  transition: border-color .2s, background-color .2s, box-shadow .2s;
-}
-.model-option:hover { border-color: var(--input-border-hover); }
-.model-option.is-selected { border-color: var(--sage-600); background: #F3F7F1; box-shadow: inset 0 0 0 1px var(--sage-600); }
-.model-option input { flex: none; width: 20px; height: 20px; margin: 2px 0 0; accent-color: var(--sage-600); cursor: pointer; }
-.model-option input:focus-visible { outline: 2px solid var(--sage-600); outline-offset: 2px; }
-.model-text { display: grid; gap: 2px; }
-.model-title { font-size: 14px; font-weight: 600; }
-.model-desc { font-size: 13px; line-height: 1.5; color: var(--muted); }
+/* Reserves: cost / gifts / net impact */
+.reserve-breakdown { margin: 14px 0 0; padding: 4px 14px; border-radius: 16px; background: #fff; border: 1px solid var(--line); }
+.rb-row { display: flex; align-items: baseline; justify-content: space-between; gap: 12px; padding: 9px 0; border-bottom: 1px dashed var(--line-strong); }
+.rb-row:last-child { border-bottom: 0; }
+.rb-row dt { font-size: 14px; color: var(--ink-soft); }
+.rb-row dd { margin: 0; font-weight: 600; font-variant-numeric: tabular-nums; white-space: nowrap; }
+.rb-sub { display: block; margin-top: 2px; font-size: 12px; color: var(--muted); font-variant-numeric: tabular-nums; }
+.rb-net dt { display: flex; align-items: center; gap: 6px; font-weight: 600; color: var(--tone-ink); }
+.rb-net dt svg { width: 16px; height: 16px; color: var(--tone); }
+.rb-net dd { font-weight: 700; color: var(--tone-ink); }
+.reserve-zero { margin-top: 12px; }
 
-@media (min-width: 640px) {
-  .model-options { grid-template-columns: 1fr 1fr; }
-}
+/* Migration notice actions */
+.notice-actions { display: flex; flex-wrap: wrap; align-items: center; gap: 8px 16px; margin-top: 10px; }
+.notice-btn { min-height: 40px; padding: 8px 16px; font-size: 14px; }
+
+/* "Advanced settings" nested inside the reserves section: lighter, no dashed frame */
+.optional-section.advanced { margin-top: 14px; border: 0; border-top: 1px solid var(--line); border-radius: 0; background: transparent; }
+.optional-section.advanced > summary { padding-inline: 0; min-height: 44px; font-size: 14px; color: var(--ink-soft); }
+.optional-section.advanced > .optional-body { padding: 4px 0 0; }

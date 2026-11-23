@@ -3,7 +3,7 @@ import { fireEvent, screen } from '@testing-library/react'
 import userEvent from '@testing-library/user-event'
 import { renderApp } from './test/renderApp.jsx'
 import { BUDGET_STORAGE_KEY } from './lib/budgetStorage.js'
-import { normalize, SAMPLES, seedBudget } from './test/helpers.js'
+import { normalize, SAMPLES, seedBudget, seedBudgetCurrent } from './test/helpers.js'
 
 const slider = (label) => screen.getByLabelText(label)
 const MEAL = 'המנה מתייקרת?'
@@ -36,15 +36,19 @@ describe('What-if scenarios', () => {
     expect(slider(MEAL).getAttribute('aria-valuetext')).toBe('עלייה של 10 אחוזים במחיר המנה')
   })
 
-  it('applies the meal change to reserve meals too', () => {
-    seedBudget(SAMPLES.loss)
+  it('applies the meal change to billed reserve meals too', () => {
+    // 210 guests, no minimum; 10 reserve guests billed at an overridden ₪200.
+    seedBudgetCurrent({
+      event: { invitedGuests: '300', attendanceRate: '70', mealPrice: '380', averageGift: '450', reserveAvailable: '10', reserveGuests: '10', reserveMealPrice: '200' },
+      expenses: [{ id: 'x', name: 'הוצאות', amount: '30,000' }],
+    })
     renderApp()
     move(MEAL, 10)
     expect(hint(MEAL)).toContain('418')
     expect(hint(MEAL)).toContain('רזרבה: 220')
-    // 250×418 + 10×220 + 30,000 = 136,700 ; gifts 94,500 → −42,200 ; diff −9,700
-    expect(scenario()).toContain('42,200')
-    expect(diff()).toContain('9,700')
+    // 210×418 + 10×220 + 30,000 = 119,980 ; gifts 220×450 = 99,000 → −20,980 ; before −12,800 → diff −8,180
+    expect(scenario()).toContain('20,980')
+    expect(diff()).toContain('8,180')
   })
 
   it('attendance 70%: 210 guests, the 250 minimum is billed, balance −11,450', () => {

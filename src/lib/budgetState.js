@@ -3,15 +3,17 @@
  * The reducer is pure; IDs for new rows are created by the caller
  * (see `createExpense` / `createFamilyGift`) so it stays deterministic and testable.
  */
-import { parseBudget, EVENT_KEYS, RESERVE_MODELS } from './validation.js'
+import { parseBudget, EVENT_FIELDS } from './validation.js'
 
-/** Version 2 added reserve guests (billing models) and family gifts. */
-export const STATE_VERSION = 2
+/**
+ * Version 2 added reserve guests and family gifts; version 3 removed the reserve
+ * billing models (only reserve guests who come are paid for).
+ */
+export const STATE_VERSION = 3
 export const MAX_EXPENSES = 50
 export const MAX_FAMILY_GIFTS = 30
 /** Illustrative starting attendance rate — not a statistically validated figure. */
 export const DEFAULT_ATTENDANCE_RATE = '85'
-const DEFAULT_RESERVE_MODEL = 'as-needed'
 
 export function createDefaultEvent() {
   return {
@@ -20,7 +22,6 @@ export function createDefaultEvent() {
     mealPrice: '',
     minimumMeals: '',
     averageGift: '',
-    reserveModel: DEFAULT_RESERVE_MODEL,
     reserveAvailable: '',
     reserveGuests: '',
     reserveMealPrice: '',
@@ -40,9 +41,17 @@ export function createDefaultFamilyGifts() {
   return { enabled: false, items: [] }
 }
 
+/**
+ * `prepaidReserve`: set once when a budget that counted prepaid reserve meals is migrated,
+ * so the change can be explained — null otherwise.
+ * Shape: { meals: string, previousCost: number|null, suggestedExpense: number|null }.
+ */
 export function createDefaultNotices() {
-  return { reserveMigrated: false }
+  return { prepaidReserve: null }
 }
+
+/** Name of the expense row offered by the migration notice. */
+export const PREPAID_RESERVE_EXPENSE_NAME = 'מנות רזרבה ששולמו מראש'
 
 const newId = (prefix) =>
   globalThis.crypto?.randomUUID?.() ?? `${prefix}-${Date.now().toString(36)}-${Math.random().toString(36).slice(2, 10)}`
@@ -98,6 +107,8 @@ export const actions = {
   familyGiftUpdated: (id, patch) => ({ type: 'familyGiftUpdated', id, patch }),
   familyGiftRemoved: (id) => ({ type: 'familyGiftRemoved', id }),
   reserveNoticeDismissed: () => ({ type: 'reserveNoticeDismissed' }),
+  /** Accepts the migration suggestion: adds the expense and closes the notice. */
+  prepaidReserveExpenseAdded: (expense) => ({ type: 'prepaidReserveExpenseAdded', expense }),
   reset: () => ({ type: 'reset' }),
 }
 
@@ -111,8 +122,7 @@ function pickStrings(patch, keys) {
 function applyAction(state, action) {
   switch (action.type) {
     case 'fieldChanged':
-      if (!EVENT_KEYS.includes(action.field)) return state
-      if (action.field === 'reserveModel' && !RESERVE_MODELS.includes(action.value)) return state
+      if (!EVENT_FIELDS.includes(action.field)) return state
       return { ...state, event: { ...state.event, [action.field]: action.value } }
 
     case 'expenseAdded':
@@ -161,8 +171,12 @@ function applyAction(state, action) {
       return { ...state, familyGifts: { ...state.familyGifts, items: state.familyGifts.items.filter((g) => g.id !== action.id) } }
 
     case 'reserveNoticeDismissed':
-      if (!state.notices.reserveMigrated) return state
-      return { ...state, notices: { ...state.notices, reserveMigrated: false } }
+      if (!state.notices.prepaidReserve) return state
+      return { ...state, notices: { ...state.notices, prepaidReserve: null } }
+
+    case 'prepaidReserveExpenseAdded':
+      if (!state.notices.prepaidReserve || state.expenses.length >= MAX_EXPENSES) return state
+      return { ...state, expenses: [...state.expenses, action.expense], notices: { ...state.notices, prepaidReserve: null } }
 
     case 'reset':
       return createInitialState()

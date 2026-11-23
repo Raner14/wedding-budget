@@ -6,7 +6,7 @@ function makeState(event = {}, expenses = [], familyGifts = { enabled: false, it
   return {
     event: {
       invitedGuests: '', attendanceRate: '85', mealPrice: '', minimumMeals: '', averageGift: '',
-      reserveModel: 'as-needed', reserveAvailable: '', reserveGuests: '', reserveMealPrice: '', reserveGift: '',
+      reserveAvailable: '', reserveGuests: '', reserveMealPrice: '', reserveGift: '',
       ...event,
     },
     expenses,
@@ -59,7 +59,7 @@ describe('parseBudget — event fields', () => {
     expect(p.errorCount).toBe(0)
     expect(p.values).toEqual({
       invitedGuests: 300, attendanceRate: 85, mealPrice: 350, minimumMeals: 250, averageGift: 505,
-      reserveModel: 'as-needed', reserveAvailable: 0, reserveGuests: 0, reserveMealPrice: null, reserveGift: null,
+      reserveAvailable: 0, reserveGuests: 0, reserveMealPrice: null, reserveGift: null,
       familyGiftsEnabled: false, familyGifts: [],
       expenses: [{ id: 'a', name: 'צלם', amount: 9_000 }],
     })
@@ -122,9 +122,10 @@ describe('parseBudget — reserve guests', () => {
     expect(p.errorCount).toBe(1)
   })
 
-  it('accepts both billing models and falls back to "as needed" for anything else', () => {
-    expect(parseBudget(makeState({ reserveModel: 'prepaid' })).values.reserveModel).toBe('prepaid')
-    expect(parseBudget(makeState({ reserveModel: 'evil' })).values.reserveModel).toBe('as-needed')
+  it('ignores a leftover billing-model field from older data', () => {
+    const p = parseBudget(makeState({ reserveModel: 'prepaid' }))
+    expect(p.errorCount).toBe(0)
+    expect(p.values).not.toHaveProperty('reserveModel')
   })
 })
 

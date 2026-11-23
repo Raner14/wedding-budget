@@ -15,7 +15,7 @@ import './EventDetailsForm.css'
  *   errors: Record<string, string>,
  *   attending: { base: number, reserve: number } | null,
  *   onFieldChange: (field: string, value: string) => void,
- *   reserve: { info: object | null, showMigrationNotice: boolean, onDismissNotice: () => void },
+ *   reserve: { info: object | null, notice: object | null, onDismissNotice: () => void, onAddPrepaidExpense: () => void },
  *   family: object,
  * }} props   `family` holds the FamilyGifts props.
  */
@@ -75,10 +75,10 @@ export default function EventDetailsForm({ event, errors, attending, onFieldChan
             event={event}
             errors={errors}
             field={field}
-            onFieldChange={onFieldChange}
             info={reserve.info}
-            showMigrationNotice={reserve.showMigrationNotice}
+            notice={reserve.notice}
             onDismissNotice={reserve.onDismissNotice}
+            onAddPrepaidExpense={reserve.onAddPrepaidExpense}
           />
         </div>
       </fieldset>

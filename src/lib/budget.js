@@ -20,11 +20,10 @@
  * are expected to come IN ADDITION to the attendance estimate (validation keeps
  * reserveGuests ≤ reserveAvailable). They add to attendance and to gift income.
  *
- *  'as-needed'  The venue bills only meals actually needed. Reserve guests first
- *               fill guaranteed (minimum) meals that are paid but unused; only the
- *               rest is billed, at the reserve meal price.
- *  'prepaid'    Every reserve place is paid once in advance, used or not. Reserve
- *               guests eat those meals and never trigger a second charge.
+ * Only reserve guests who actually come are paid for. They first fill guaranteed
+ * (minimum) meals that are already paid but unused — never charged twice; only
+ * the rest is billed, at the reserve meal price. No reserve guests → no reserve
+ * cost and no reserve gifts.
  *
  * `reserveMealPrice` / `reserveGift` = null means "same as the regular meal price /
  * the average gift".
@@ -48,7 +47,6 @@
  * @property {number} mealPrice           Regular meal price (₪, VAT inclusive).
  * @property {number} minimumMeals        Guaranteed minimum regular meals (0 = none).
  * @property {number} averageGift         Average gift per attending guest (₪).
- * @property {'as-needed'|'prepaid'} reserveModel
  * @property {number} reserveAvailable    Reserve places kept by the venue.
  * @property {number} reserveGuests       Extra guests expected to come (≤ reserveAvailable).
  * @property {number|null} reserveMealPrice  null = same as mealPrice.
@@ -81,15 +79,9 @@ export function calculateAttendingGuests(invitedGuests, attendanceRate) {
 function calculateVenue(v, baseGuests) {
   const mainMeals = Math.max(baseGuests, v.minimumMeals)
   const spareGuaranteed = mainMeals - baseGuests
-  const prepaid = v.reserveModel === 'prepaid'
-
-  // Prepaid reserve meals are used first (validation guarantees they suffice);
-  // the defensive remainder follows the "as needed" rules.
-  const fromPrepaid = prepaid ? Math.min(v.reserveGuests, v.reserveAvailable) : 0
-  const remaining = v.reserveGuests - fromPrepaid
-  const coveredByGuaranteed = Math.min(remaining, spareGuaranteed)
-  const chargedExtra = remaining - coveredByGuaranteed
-  const reserveMealsBilled = (prepaid ? v.reserveAvailable : 0) + chargedExtra
+  // Reserve guests sit in paid-but-unused guaranteed meals first; only the rest is billed.
+  const coveredByGuaranteed = Math.min(v.reserveGuests, spareGuaranteed)
+  const reserveMealsBilled = v.reserveGuests - coveredByGuaranteed
 
   const reserveMealPrice = v.reserveMealPrice ?? v.mealPrice
   const mealsCost = mainMeals * v.mealPrice
@@ -100,7 +92,6 @@ function calculateVenue(v, baseGuests) {
     reserveMealPrice,
     coveredByGuaranteed,
     unusedMeals: spareGuaranteed - coveredByGuaranteed,
-    unusedReserveMeals: prepaid ? v.reserveAvailable - fromPrepaid : 0,
     mealsCost,
     reserveCost,
     venueCost: mealsCost + reserveCost,
@@ -137,7 +128,8 @@ export function calculateBudget(v) {
   const totalCost = venue.venueCost + additionalCost
 
   const reserveGift = v.reserveGift ?? v.averageGift
-  const guestGiftIncome = baseGuests * v.averageGift + reserveGuests * reserveGift
+  const reserveGiftIncome = reserveGuests * reserveGift
+  const guestGiftIncome = baseGuests * v.averageGift + reserveGiftIncome
   const familyGiftIncome = v.familyGiftsEnabled ? v.familyGifts.reduce((sum, g) => sum + g.amount, 0) : 0
   const totalIncome = guestGiftIncome + familyGiftIncome
   const balance = totalIncome - totalCost
@@ -165,6 +157,9 @@ export function calculateBudget(v) {
     additionalCost,
     totalCost,
     reserveGift,
+    reserveGiftIncome,
+    /** What the reserve guests change in the balance: their gifts minus the meals billed for them. */
+    reserveNetImpact: reserveGiftIncome - venue.reserveCost,
     guestGiftIncome,
     familyGiftIncome,
     totalIncome,
