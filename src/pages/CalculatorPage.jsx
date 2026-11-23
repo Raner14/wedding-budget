@@ -12,7 +12,7 @@ import ExpensesList from '../components/calculator/ExpensesList.jsx'
 import BudgetSummary from '../components/calculator/BudgetSummary.jsx'
 import MobileBalanceBar from '../components/calculator/MobileBalanceBar.jsx'
 import WhatIfPanel from '../components/calculator/WhatIfPanel.jsx'
-import { actions, budgetReducer } from '../lib/budgetState.js'
+import { actions, budgetReducer, createSuggestedFamilyGifts } from '../lib/budgetState.js'
 import { loadBudget, saveBudget } from '../lib/budgetStorage.js'
 import { isStorageAvailable } from '../lib/safeStorage.js'
 import { parseBudget, parseWhole } from '../lib/validation.js'
@@ -20,15 +20,20 @@ import { calculateAttendingGuests } from '../lib/budget.js'
 import { UNDO_TIMEOUT_MS } from '../components/undo.js'
 import './CalculatorPage.css'
 
-/** Attending guests can be shown as soon as both inputs it depends on are valid. */
-function attendingFrom(event, errors) {
-  if (errors.invitedGuests || errors.attendanceRate) return null
-  return calculateAttendingGuests(parseWhole(event.invitedGuests).value, parseWhole(event.attendanceRate).value)
+/**
+ * Expected guests, shown as soon as the inputs they depend on are valid: the base
+ * estimate needs invited + rate; reserve guests are added once the reserve fields are valid.
+ */
+function attendingFrom(event, parsed) {
+  const { errors, eventResult } = parsed
+  if (eventResult) return { base: eventResult.baseGuests, reserve: eventResult.reserveGuests }
+  if (errors.event.invitedGuests || errors.event.attendanceRate) return null
+  return { base: calculateAttendingGuests(parseWhole(event.invitedGuests).value, parseWhole(event.attendanceRate).value), reserve: 0 }
 }
 
 export default function CalculatorPage() {
   const [state, dispatch] = useReducer(budgetReducer, undefined, loadBudget)
-  const { event, expenses, lastValidValues } = state
+  const { event, expenses, familyGifts, notices, lastValidValues } = state
   /** Only the most recent deletion can be undone. */
   const [pendingUndo, setPendingUndo] = useState(null)
   const [highlightId, setHighlightId] = useState(null)
@@ -38,8 +43,8 @@ export default function CalculatorPage() {
 
   // Persist the raw input on every change. Failures are tolerated (private mode, quota).
   useEffect(() => {
-    saveBudget({ event, expenses })
-  }, [event, expenses])
+    saveBudget({ event, expenses, familyGifts, notices })
+  }, [event, expenses, familyGifts, notices])
 
   // Auto-dismiss the undo toast. A newer deletion replaces it and restarts the timer.
   useEffect(() => {
@@ -101,8 +106,22 @@ export default function CalculatorPage() {
               <EventDetailsForm
                 event={event}
                 errors={parsed.errors.event}
-                attendingGuests={attendingFrom(event, parsed.errors.event)}
+                attending={attendingFrom(event, parsed)}
                 onFieldChange={(field, value) => dispatch(actions.fieldChanged(field, value))}
+                reserve={{
+                  info: parsed.eventResult && { ...parsed.eventResult, reserveModel: event.reserveModel },
+                  showMigrationNotice: notices.reserveMigrated,
+                  onDismissNotice: () => dispatch(actions.reserveNoticeDismissed()),
+                }}
+                family={{
+                  familyGifts,
+                  errors: parsed.errors.family,
+                  total: parsed.familyTotal,
+                  onToggle: (enabled) => dispatch(actions.familyGiftsToggled(enabled, enabled ? createSuggestedFamilyGifts() : [])),
+                  onAdd: (gift) => dispatch(actions.familyGiftAdded(gift)),
+                  onUpdate: (id, patch) => dispatch(actions.familyGiftUpdated(id, patch)),
+                  onRemove: (id) => dispatch(actions.familyGiftRemoved(id)),
+                }}
               />
               <ExpensesList
                 expenses={expenses}

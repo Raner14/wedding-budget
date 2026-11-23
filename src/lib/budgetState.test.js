@@ -1,12 +1,14 @@
 // @vitest-environment node
 import { describe, expect, it } from 'vitest'
 import {
+  MAX_EXPENSES,
+  MAX_FAMILY_GIFTS,
   actions,
   budgetReducer,
   createDefaultExpenses,
   createExpense,
   createInitialState,
-  MAX_EXPENSES,
+  createSuggestedFamilyGifts,
   toPersisted,
 } from './budgetState.js'
 
@@ -138,6 +140,98 @@ describe('helpers', () => {
 
   it('toPersisted stores only versioned raw input, never derived values', () => {
     const s = fill(createInitialState(), { invitedGuests: '100' })
-    expect(toPersisted(s)).toEqual({ version: 1, event: s.event, expenses: s.expenses })
+    expect(toPersisted(s)).toEqual({ version: 2, event: s.event, expenses: s.expenses, familyGifts: s.familyGifts, notices: s.notices })
+    expect(toPersisted(s)).not.toHaveProperty('lastValidValues')
+  })
+})
+
+describe('budgetReducer — reserve fields', () => {
+  it('starts with no reserve and the "pay as needed" model', () => {
+    expect(createInitialState().event).toMatchObject({
+      reserveModel: 'as-needed', reserveAvailable: '', reserveGuests: '', reserveMealPrice: '', reserveGift: '',
+    })
+  })
+
+  it('switches the billing model, and ignores unknown models', () => {
+    const s = budgetReducer(createInitialState(), actions.fieldChanged('reserveModel', 'prepaid'))
+    expect(s.event.reserveModel).toBe('prepaid')
+    expect(budgetReducer(s, actions.fieldChanged('reserveModel', 'free-food'))).toBe(s)
+  })
+
+  it('reserve guests change the last valid values', () => {
+    const s = fill(createInitialState(), { invitedGuests: '100', reserveAvailable: '10', reserveGuests: '4' })
+    expect(s.lastValidValues).toMatchObject({ reserveAvailable: 10, reserveGuests: 4 })
+  })
+
+  it('dismisses the migration notice once', () => {
+    const migrated = createInitialState({ ...createInitialState(), notices: { reserveMigrated: true } })
+    const dismissed = budgetReducer(migrated, actions.reserveNoticeDismissed())
+    expect(dismissed.notices.reserveMigrated).toBe(false)
+    expect(budgetReducer(dismissed, actions.reserveNoticeDismissed())).toBe(dismissed)
+  })
+})
+
+describe('budgetReducer — family gifts', () => {
+  const suggested = [{ id: 'f1', label: 'הורי הכלה', amount: '' }, { id: 'f2', label: 'הורי החתן', amount: '' }]
+
+  it('starts disabled and empty', () => {
+    expect(createInitialState().familyGifts).toEqual({ enabled: false, items: [] })
+  })
+
+  it('adds the suggested rows the first time it is switched on', () => {
+    const s = budgetReducer(createInitialState(), actions.familyGiftsToggled(true, suggested))
+    expect(s.familyGifts).toEqual({ enabled: true, items: suggested })
+  })
+
+  it('keeps existing rows when switched off and on again (no duplicates)', () => {
+    let s = budgetReducer(createInitialState(), actions.familyGiftsToggled(true, suggested))
+    s = budgetReducer(s, actions.familyGiftUpdated('f1', { amount: '20,000' }))
+    s = budgetReducer(s, actions.familyGiftsToggled(false))
+    expect(s.familyGifts.items).toHaveLength(2)
+    s = budgetReducer(s, actions.familyGiftsToggled(true, [{ id: 'x', label: 'x', amount: '' }]))
+    expect(s.familyGifts.items.map((g) => g.id)).toEqual(['f1', 'f2'])
+    expect(s.familyGifts.items[0].amount).toBe('20,000')
+  })
+
+  it('returns the same state when toggling to the current value', () => {
+    const s = createInitialState()
+    expect(budgetReducer(s, actions.familyGiftsToggled(false))).toBe(s)
+  })
+
+  it('adds, edits (label/amount only) and removes gifts', () => {
+    let s = budgetReducer(createInitialState(), actions.familyGiftsToggled(true))
+    s = budgetReducer(s, actions.familyGiftAdded({ id: 'g', label: '', amount: '' }))
+    s = budgetReducer(s, actions.familyGiftUpdated('g', { label: 'סבא וסבתא', amount: '5000', id: 'evil' }))
+    expect(s.familyGifts.items).toEqual([{ id: 'g', label: 'סבא וסבתא', amount: '5000' }])
+    s = budgetReducer(s, actions.familyGiftRemoved('g'))
+    expect(s.familyGifts.items).toEqual([])
+    expect(budgetReducer(s, actions.familyGiftRemoved('nope'))).toBe(s)
+  })
+
+  it(`stops adding at ${MAX_FAMILY_GIFTS} gifts`, () => {
+    let s = budgetReducer(createInitialState(), actions.familyGiftsToggled(true))
+    for (let i = 0; i < MAX_FAMILY_GIFTS + 3; i++) s = budgetReducer(s, actions.familyGiftAdded({ id: `g${i}`, label: '', amount: '' }))
+    expect(s.familyGifts.items).toHaveLength(MAX_FAMILY_GIFTS)
+  })
+
+  it('only counts family gifts while enabled', () => {
+    let s = fill(createInitialState(), { invitedGuests: '10' })
+    s = budgetReducer(s, actions.familyGiftsToggled(true, [{ id: 'g', label: 'הורים', amount: '1000' }]))
+    expect(s.lastValidValues.familyGifts).toEqual([{ id: 'g', label: 'הורים', amount: 1000 }])
+    s = budgetReducer(s, actions.familyGiftsToggled(false))
+    expect(s.lastValidValues.familyGiftsEnabled).toBe(false)
+    expect(s.lastValidValues.familyGifts).toEqual([])
+  })
+
+  it('createSuggestedFamilyGifts offers the parents with unique ids', () => {
+    const rows = createSuggestedFamilyGifts()
+    expect(rows.map((r) => r.label)).toEqual(['הורי הכלה', 'הורי החתן'])
+    expect(rows[0].id).not.toBe(rows[1].id)
+  })
+
+  it('reset clears family gifts and notices too', () => {
+    let s = budgetReducer(createInitialState(), actions.familyGiftsToggled(true, suggested))
+    s = budgetReducer(s, actions.reset())
+    expect(s).toEqual(createInitialState())
   })
 })

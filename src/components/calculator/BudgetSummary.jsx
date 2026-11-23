@@ -33,6 +33,7 @@ function useDebouncedAnnouncement(text) {
 
 function balanceNote(result) {
   if (result.attendingGuests === 0) {
+    if (result.familyGiftIncome > 0) return 'אין אורחים מגיעים, כך שההכנסה היא ממתנות המשפחה בלבד.'
     return result.totalCost > 0
       ? 'אין אורחים מגיעים, ולכן אין הכנסה ממתנות. ההפסד הוא סך כל ההוצאות.'
       : 'אין אורחים מגיעים ואין הוצאות.'
@@ -115,7 +116,8 @@ export default function BudgetSummary({ parsed, lastValidValues }) {
       : result ? `${status.label} ${formatNumber(Math.abs(result.balance))} שקלים${view.stale ? ', לא מעודכן' : ''}` : '',
   )
 
-  const maxBar = result ? Math.max(result.totalCost, result.giftIncome) : 0
+  const maxBar = result ? Math.max(result.totalCost, result.totalIncome) : 0
+  const prepaidReserve = view.values?.reserveModel === 'prepaid'
   const barWidth = (value) => (maxBar ? `${(value / maxBar) * 100}%` : '0%')
 
   return (
@@ -175,10 +177,17 @@ export default function BudgetSummary({ parsed, lastValidValues }) {
               </div>
               <div>
                 <div className="cmp-top">
-                  <span>מתנות צפויות<small>{formatNumber(result.attendingGuests)} אורחים × {formatMoney(view.values.averageGift)}</small></span>
-                  <AnimatedMoney value={result.giftIncome} />
+                  <span>
+                    מתנות צפויות
+                    <small>{formatNumber(result.baseGuests)} אורחים × {formatMoney(view.values.averageGift)}</small>
+                    {result.reserveGuests > 0 && (
+                      <small>+ {formatNumber(result.reserveGuests)} אורחי רזרבה × {formatMoney(result.reserveGift)}</small>
+                    )}
+                    {result.familyGiftIncome > 0 && <small>+ מתנות מהמשפחה {formatMoney(result.familyGiftIncome)}</small>}
+                  </span>
+                  <AnimatedMoney value={result.totalIncome} />
                 </div>
-                <div className="cmp-track" aria-hidden="true"><span className="cmp-bar bar-gift" style={{ width: barWidth(result.giftIncome) }} /></div>
+                <div className="cmp-track" aria-hidden="true"><span className="cmp-bar bar-gift" style={{ width: barWidth(result.totalIncome) }} /></div>
               </div>
             </div>
 
@@ -189,7 +198,8 @@ export default function BudgetSummary({ parsed, lastValidValues }) {
                   אולם ומנות
                   <span className="bd-sub">
                     {formatNumber(result.mainMeals)} מנות × {formatMoney(view.values.mealPrice)}
-                    {view.values.reserveMeals > 0 && ` + ${formatNumber(view.values.reserveMeals)} רזרבה × ${formatMoney(view.values.reserveMealPrice)}`}
+                    {result.reserveMealsBilled > 0 &&
+                      ` + ${formatNumber(result.reserveMealsBilled)} ${prepaidReserve ? 'מנות רזרבה ששולמו מראש' : 'מנות רזרבה'} × ${formatMoney(result.reserveMealPrice)}`}
                   </span>
                 </dt>
                 <dd><AnimatedMoney value={result.venueCost} /></dd>
@@ -200,18 +210,32 @@ export default function BudgetSummary({ parsed, lastValidValues }) {
               </div>
             </dl>
 
-            {result.unusedMeals > 0 && (
+            {(result.unusedMeals > 0 || result.unusedReserveMeals > 0) && (
               <div className="alert alert-info">
                 <Icon name="info" strokeWidth={2} />
-                <p>בגלל מינימום המנות תשלמו על {formatNumber(result.unusedMeals)} מנות שלא ינוצלו ({formatMoney(result.unusedMeals * view.values.mealPrice)}).</p>
+                <div>
+                  {result.unusedMeals > 0 && (
+                    <p>בגלל מינימום המנות תשלמו על {formatNumber(result.unusedMeals)} מנות שלא ינוצלו ({formatMoney(result.unusedMeals * view.values.mealPrice)}).</p>
+                  )}
+                  {result.unusedReserveMeals > 0 && (
+                    <p>
+                      {formatNumber(result.unusedReserveMeals)} מנות רזרבה ששולמו מראש לא ינוצלו (
+                      {formatMoney(result.unusedReserveMeals * result.reserveMealPrice)}).
+                    </p>
+                  )}
+                </div>
               </div>
             )}
 
             <div className="metrics">
               <div className="metric">
-                <div className="metric-head"><Icon name="gift" /><p className="metric-label">עלות לאורח מגיע</p></div>
+                <div className="metric-head"><Icon name="gift" /><p className="metric-label">מתנה ממוצעת לאיזון</p></div>
                 {result.breakEvenGift === null ? <span className="metric-value">—</span> : <AnimatedMoney className="metric-value" value={result.breakEvenGift} />}
-                <p className="metric-sub">= המתנה הממוצעת הדרושה לאיזון</p>
+                <p className="metric-sub">
+                  {result.costPerAttendee === null
+                    ? 'המתנה הממוצעת לאורח שנדרשת כדי לא להפסיד'
+                    : `עלות לאורח מגיע: ${formatMoney(result.costPerAttendee)}${result.familyGiftIncome > 0 ? ' (לפני מתנות המשפחה)' : ''}`}
+                </p>
                 <GiftComparison result={result} averageGift={view.values.averageGift} />
               </div>
               <div className="metric">

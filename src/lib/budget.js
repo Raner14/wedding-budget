@@ -6,17 +6,32 @@
  * `validation.js`; this module never guesses or repairs input.
  *
  * Rounding rules (documented in the architecture, enforced by tests):
- *  R1  attendingGuests = round(invited × rate / 100), half rounds up.
+ *  R1  baseGuests = round(invited × rate / 100), half rounds up.
  *  R3  scenario-adjusted prices/gifts round to whole shekels (half up).
  *  R4  all sums/products are exact integers — no intermediate rounding.
- *  R6  breakEvenGift = ceil(totalCost / attending): the MINIMUM whole-shekel
- *      average gift that yields balance ≥ 0.
- *  R7  breakEvenMealPrice = floor(available / mainMeals): the MAXIMUM
- *      whole-shekel regular meal price that keeps balance ≥ 0.
+ *  R6  breakEvenGift: the MINIMUM whole-shekel average gift that yields balance ≥ 0.
+ *  R7  breakEvenMealPrice: the MAXIMUM whole-shekel regular meal price that keeps balance ≥ 0.
  *
  * Floating point: products are always computed before dividing
- * (`a * b / 100`, never `a * (b / 100)`), so the numerator is an exact integer
- * and halves such as 1.5 are represented exactly before rounding.
+ * (`a * b / 100`, never `a * (b / 100)`), so halves such as 1.5 are exact before rounding.
+ *
+ * ── Reserve guests (assumptions) ──────────────────────────────────────────────
+ * `reserveAvailable` reserve places are kept by the venue. `reserveGuests` of them
+ * are expected to come IN ADDITION to the attendance estimate (validation keeps
+ * reserveGuests ≤ reserveAvailable). They add to attendance and to gift income.
+ *
+ *  'as-needed'  The venue bills only meals actually needed. Reserve guests first
+ *               fill guaranteed (minimum) meals that are paid but unused; only the
+ *               rest is billed, at the reserve meal price.
+ *  'prepaid'    Every reserve place is paid once in advance, used or not. Reserve
+ *               guests eat those meals and never trigger a second charge.
+ *
+ * `reserveMealPrice` / `reserveGift` = null means "same as the regular meal price /
+ * the average gift".
+ *
+ * ── Family gifts ──────────────────────────────────────────────────────────────
+ * Fixed income on top of guest gifts (when enabled). They must NOT be part of the
+ * average guest gift; the UI says so. Scenario sliders do not change them.
  */
 
 /**
@@ -29,13 +44,18 @@
 /**
  * @typedef {Object} BudgetValues
  * @property {number} invitedGuests
- * @property {number} attendanceRate     Percent, 0–100.
- * @property {number} mealPrice          Regular meal price (₪, VAT inclusive).
- * @property {number} minimumMeals       Guaranteed minimum regular meals (0 = none).
- * @property {number} reserveMeals       Additional reserve meals expected to be billed.
- * @property {number} reserveMealPrice   Price per billed reserve meal (₪).
- * @property {number} averageGift        Average gift per ATTENDING guest (₪).
- * @property {Expense[]} expenses        Additional (non-venue) expenses.
+ * @property {number} attendanceRate      Percent, 0–100.
+ * @property {number} mealPrice           Regular meal price (₪, VAT inclusive).
+ * @property {number} minimumMeals        Guaranteed minimum regular meals (0 = none).
+ * @property {number} averageGift         Average gift per attending guest (₪).
+ * @property {'as-needed'|'prepaid'} reserveModel
+ * @property {number} reserveAvailable    Reserve places kept by the venue.
+ * @property {number} reserveGuests       Extra guests expected to come (≤ reserveAvailable).
+ * @property {number|null} reserveMealPrice  null = same as mealPrice.
+ * @property {number|null} reserveGift       null = same as averageGift.
+ * @property {boolean} familyGiftsEnabled
+ * @property {{id: string, label: string, amount: number}[]} familyGifts
+ * @property {Expense[]} expenses         Additional (non-venue) expenses.
  */
 
 /**
@@ -45,51 +65,42 @@
  */
 
 /**
- * @typedef {Object} BudgetResult
- * @property {number} attendingGuests
- * @property {number} mainMeals         Regular meals billed: max(attending, minimum).
- * @property {number} unusedMeals       Paid regular meals no guest will eat (minimum effect).
- * @property {number} mealsCost
- * @property {number} reserveCost
- * @property {number} venueCost         mealsCost + reserveCost.
- * @property {number} additionalCost    Sum of all additional expenses.
- * @property {number} totalCost
- * @property {number} giftIncome
- * @property {number} balance           giftIncome − totalCost (positive = profit).
- * @property {'profit'|'loss'|'even'} balanceStatus
- * @property {number|null} costPerAttendee   Exact totalCost / attending (unrounded); null when nobody attends.
- * @property {number|null} breakEvenGift     ceil(totalCost / attending); null when nobody attends.
- * @property {BreakEvenMealPrice} breakEvenMealPrice
- */
-
-/**
- * Expected attending guests (R1).
+ * Expected attending guests from the invitation list (R1).
  * @param {number} invitedGuests
  * @param {number} attendanceRate Percent.
- * @returns {number}
  */
 export function calculateAttendingGuests(invitedGuests, attendanceRate) {
   return Math.round((invitedGuests * attendanceRate) / 100)
 }
 
 /**
- * Venue billing.
- *
- * Regular meals are billed for every attending guest, but never fewer than the
- * guaranteed minimum. Reserve meals are ADDITIONAL meals the couple expects the
- * venue to bill beyond the regular/guaranteed meals; they are added exactly
- * once and never count toward attendance, the minimum, or gift income.
- *
- * @param {BudgetValues} values
- * @param {number} attendingGuests
+ * Venue billing: guaranteed minimum, reserve model and where reserve guests sit.
+ * @param {BudgetValues} v
+ * @param {number} baseGuests
  */
-function calculateVenue(values, attendingGuests) {
-  const mainMeals = Math.max(attendingGuests, values.minimumMeals)
-  const mealsCost = mainMeals * values.mealPrice
-  const reserveCost = values.reserveMeals * values.reserveMealPrice
+function calculateVenue(v, baseGuests) {
+  const mainMeals = Math.max(baseGuests, v.minimumMeals)
+  const spareGuaranteed = mainMeals - baseGuests
+  const prepaid = v.reserveModel === 'prepaid'
+
+  // Prepaid reserve meals are used first (validation guarantees they suffice);
+  // the defensive remainder follows the "as needed" rules.
+  const fromPrepaid = prepaid ? Math.min(v.reserveGuests, v.reserveAvailable) : 0
+  const remaining = v.reserveGuests - fromPrepaid
+  const coveredByGuaranteed = Math.min(remaining, spareGuaranteed)
+  const chargedExtra = remaining - coveredByGuaranteed
+  const reserveMealsBilled = (prepaid ? v.reserveAvailable : 0) + chargedExtra
+
+  const reserveMealPrice = v.reserveMealPrice ?? v.mealPrice
+  const mealsCost = mainMeals * v.mealPrice
+  const reserveCost = reserveMealsBilled * reserveMealPrice
   return {
     mainMeals,
-    unusedMeals: mainMeals - attendingGuests,
+    reserveMealsBilled,
+    reserveMealPrice,
+    coveredByGuaranteed,
+    unusedMeals: spareGuaranteed - coveredByGuaranteed,
+    unusedReserveMeals: prepaid ? v.reserveAvailable - fromPrepaid : 0,
     mealsCost,
     reserveCost,
     venueCost: mealsCost + reserveCost,
@@ -97,48 +108,71 @@ function calculateVenue(values, attendingGuests) {
 }
 
 /**
- * The highest whole-shekel regular meal price that still breaks even (R7).
- * Reserve meal price is held fixed; only the regular meal price is solved for.
+ * The highest whole-shekel regular meal price that still breaks even (R7),
+ * holding everything else fixed.
  *
- * @param {{giftIncome: number, additionalCost: number, reserveCost: number, mainMeals: number}} parts
+ * @param {{ income: number, fixedCosts: number, mealUnits: number }} parts
+ *   income: all expected income; fixedCosts: costs that do not depend on the regular
+ *   meal price; mealUnits: meals billed at the regular meal price.
  * @returns {BreakEvenMealPrice}
  */
-export function calculateBreakEvenMealPrice({ giftIncome, additionalCost, reserveCost, mainMeals }) {
-  if (mainMeals === 0) return { status: 'not-applicable' }
-  const available = giftIncome - additionalCost - reserveCost
+export function calculateBreakEvenMealPrice({ income, fixedCosts, mealUnits }) {
+  if (mealUnits === 0) return { status: 'not-applicable' }
+  const available = income - fixedCosts
   if (available < 0) return { status: 'impossible', shortfall: -available }
-  return { status: 'ok', value: Math.floor(available / mainMeals) }
+  return { status: 'ok', value: Math.floor(available / mealUnits) }
 }
 
 /**
  * Full budget calculation.
- * @param {BudgetValues} values
- * @returns {BudgetResult}
+ * @param {BudgetValues} v
  */
-export function calculateBudget(values) {
-  const attendingGuests = calculateAttendingGuests(values.invitedGuests, values.attendanceRate)
-  const venue = calculateVenue(values, attendingGuests)
-  const additionalCost = values.expenses.reduce((sum, expense) => sum + expense.amount, 0)
+export function calculateBudget(v) {
+  const baseGuests = calculateAttendingGuests(v.invitedGuests, v.attendanceRate)
+  const reserveGuests = v.reserveGuests
+  const attendingGuests = baseGuests + reserveGuests
+  const venue = calculateVenue(v, baseGuests)
+
+  const additionalCost = v.expenses.reduce((sum, e) => sum + e.amount, 0)
   const totalCost = venue.venueCost + additionalCost
-  const giftIncome = attendingGuests * values.averageGift
-  const balance = giftIncome - totalCost
+
+  const reserveGift = v.reserveGift ?? v.averageGift
+  const guestGiftIncome = baseGuests * v.averageGift + reserveGuests * reserveGift
+  const familyGiftIncome = v.familyGiftsEnabled ? v.familyGifts.reduce((sum, g) => sum + g.amount, 0) : 0
+  const totalIncome = guestGiftIncome + familyGiftIncome
+  const balance = totalIncome - totalCost
+
+  // R6 — solve for the AVERAGE GIFT input. Reserve guests give the same gift unless
+  // their gift is overridden, in which case their gifts are a fixed amount.
+  const followsAverage = v.reserveGift === null
+  const payingGuests = followsAverage ? attendingGuests : baseGuests
+  const stillNeeded = totalCost - familyGiftIncome - (followsAverage ? 0 : reserveGuests * reserveGift)
+  const breakEvenGift = attendingGuests === 0 || payingGuests === 0 ? null : Math.max(0, Math.ceil(stillNeeded / payingGuests))
+
+  // R7 — solve for the regular meal price; reserve meals follow it unless overridden.
+  const reserveFollowsMeal = v.reserveMealPrice === null
+  const breakEvenMealPrice = calculateBreakEvenMealPrice({
+    income: totalIncome,
+    fixedCosts: additionalCost + (reserveFollowsMeal ? 0 : venue.reserveCost),
+    mealUnits: venue.mainMeals + (reserveFollowsMeal ? venue.reserveMealsBilled : 0),
+  })
 
   return {
+    baseGuests,
+    reserveGuests,
     attendingGuests,
     ...venue,
     additionalCost,
     totalCost,
-    giftIncome,
+    reserveGift,
+    guestGiftIncome,
+    familyGiftIncome,
+    totalIncome,
     balance,
     balanceStatus: balance > 0 ? 'profit' : balance < 0 ? 'loss' : 'even',
     costPerAttendee: attendingGuests > 0 ? totalCost / attendingGuests : null,
-    breakEvenGift: attendingGuests > 0 ? Math.ceil(totalCost / attendingGuests) : null,
-    breakEvenMealPrice: calculateBreakEvenMealPrice({
-      giftIncome,
-      additionalCost,
-      reserveCost: venue.reserveCost,
-      mainMeals: venue.mainMeals,
-    }),
+    breakEvenGift,
+    breakEvenMealPrice,
   }
 }
 
@@ -152,18 +186,19 @@ function adjustByPercent(amount, changePct) {
   return Math.round((amount * (100 + changePct)) / 100)
 }
 
+/** Adjusts an optional override; null ("same as …") stays null and follows its base. */
+const adjustOptional = (amount, changePct) => (amount === null ? null : adjustByPercent(amount, changePct))
+
 /**
  * @typedef {Object} ScenarioAdjustments
- * @property {number} mealPriceChangePct  Applied to BOTH regular and reserve meal prices.
+ * @property {number} mealPriceChangePct  Applied to the regular AND the reserve meal price.
  * @property {number} attendanceRate      Replaces the base attendance rate (percent).
- * @property {number} giftChangePct       Applied to the average gift.
+ * @property {number} giftChangePct       Applied to the average gift and the reserve-guest gift.
  */
 
 /**
  * Returns a NEW values object for a what-if scenario. The input is not mutated.
- *
- * The meal price change applies consistently to both the regular meal price and
- * the reserve meal price, on the assumption that a venue price change affects both.
+ * Reserve guests and family gifts are not changed by scenarios.
  *
  * @param {BudgetValues} values
  * @param {ScenarioAdjustments} adjustments
@@ -173,8 +208,9 @@ export function applyScenario(values, { mealPriceChangePct, attendanceRate, gift
   return {
     ...values,
     mealPrice: adjustByPercent(values.mealPrice, mealPriceChangePct),
-    reserveMealPrice: adjustByPercent(values.reserveMealPrice, mealPriceChangePct),
+    reserveMealPrice: adjustOptional(values.reserveMealPrice, mealPriceChangePct),
     attendanceRate,
     averageGift: adjustByPercent(values.averageGift, giftChangePct),
+    reserveGift: adjustOptional(values.reserveGift, giftChangePct),
   }
 }

@@ -2,13 +2,15 @@
 import { describe, expect, it } from 'vitest'
 import { formatWholeInput, MESSAGES, parseBudget, parseWhole } from './validation.js'
 
-function makeState(event = {}, expenses = []) {
+function makeState(event = {}, expenses = [], familyGifts = { enabled: false, items: [] }) {
   return {
     event: {
-      invitedGuests: '', attendanceRate: '85', mealPrice: '', minimumMeals: '',
-      reserveMeals: '', reserveMealPrice: '', averageGift: '', ...event,
+      invitedGuests: '', attendanceRate: '85', mealPrice: '', minimumMeals: '', averageGift: '',
+      reserveModel: 'as-needed', reserveAvailable: '', reserveGuests: '', reserveMealPrice: '', reserveGift: '',
+      ...event,
     },
     expenses,
+    familyGifts,
   }
 }
 
@@ -56,8 +58,9 @@ describe('parseBudget — event fields', () => {
     ))
     expect(p.errorCount).toBe(0)
     expect(p.values).toEqual({
-      invitedGuests: 300, attendanceRate: 85, mealPrice: 350, minimumMeals: 250,
-      reserveMeals: 0, reserveMealPrice: 0, averageGift: 505,
+      invitedGuests: 300, attendanceRate: 85, mealPrice: 350, minimumMeals: 250, averageGift: 505,
+      reserveModel: 'as-needed', reserveAvailable: 0, reserveGuests: 0, reserveMealPrice: null, reserveGift: null,
+      familyGiftsEnabled: false, familyGifts: [],
       expenses: [{ id: 'a', name: 'צלם', amount: 9_000 }],
     })
     expect(p.isEmpty).toBe(false)
@@ -83,23 +86,83 @@ describe('parseBudget — event fields', () => {
     expect(parseBudget(makeState({ mealPrice: '10,000,001' })).errors.event.mealPrice).toBe(MESSAGES.maxMoney)
   })
 
-  it('requires a reserve meal price only when reserve meals are entered', () => {
-    expect(parseBudget(makeState({ reserveMeals: '10' })).errors.event.reserveMealPrice).toBe(MESSAGES.reservePriceRequired)
-    expect(parseBudget(makeState({ reserveMeals: '10', reserveMealPrice: '200' })).errorCount).toBe(0)
-    expect(parseBudget(makeState({ reserveMeals: '', reserveMealPrice: '200' })).errorCount).toBe(0)
-    expect(parseBudget(makeState({ reserveMeals: '0' })).errorCount).toBe(0)
-  })
-
-  it('does not add the reserve-price error on top of a malformed reserve count', () => {
-    const p = parseBudget(makeState({ reserveMeals: 'x' }))
-    expect(p.errors.event).toEqual({ reserveMeals: MESSAGES.notWhole })
-    expect(p.errorCount).toBe(1)
-  })
-
   it('counts every invalid field', () => {
     const p = parseBudget(makeState({ invitedGuests: '-1', mealPrice: '1.5', averageGift: 'abc' }))
     expect(p.errorCount).toBe(3)
   })
+})
+
+describe('parseBudget — reserve guests', () => {
+  it('parses an empty reserve price / gift as "same as the regular value" (null)', () => {
+    const p = parseBudget(makeState({ reserveAvailable: '10', reserveGuests: '5' }))
+    expect(p.values).toMatchObject({ reserveAvailable: 10, reserveGuests: 5, reserveMealPrice: null, reserveGift: null })
+  })
+
+  it('keeps an explicit 0 override (not the same as empty)', () => {
+    const p = parseBudget(makeState({ reserveMealPrice: '0', reserveGift: '0' }))
+    expect(p.values).toMatchObject({ reserveMealPrice: 0, reserveGift: 0 })
+  })
+
+  it('validates optional fields when they are filled', () => {
+    const p = parseBudget(makeState({ reserveMealPrice: '20,0', reserveGift: '10,000,001' }))
+    expect(p.errors.event).toEqual({ reserveMealPrice: MESSAGES.notWhole, reserveGift: MESSAGES.maxMoney })
+  })
+
+  it('does not allow more expected reserve guests than reserve places', () => {
+    expect(parseBudget(makeState({ reserveAvailable: '10', reserveGuests: '10' })).errorCount).toBe(0)
+    const p = parseBudget(makeState({ reserveAvailable: '10', reserveGuests: '11' }))
+    expect(p.errors.event).toEqual({ reserveGuests: MESSAGES.reserveGuestsOverAvailable(10) })
+    expect(MESSAGES.reserveGuestsOverAvailable(10)).toContain('(10)')
+    expect(parseBudget(makeState({ reserveGuests: '3' })).errors.event.reserveGuests).toBe(MESSAGES.reserveGuestsOverAvailable(0))
+  })
+
+  it('does not stack the cross-field error on a malformed count', () => {
+    const p = parseBudget(makeState({ reserveAvailable: 'x', reserveGuests: '5' }))
+    expect(p.errors.event).toEqual({ reserveAvailable: MESSAGES.notWhole })
+    expect(p.errorCount).toBe(1)
+  })
+
+  it('accepts both billing models and falls back to "as needed" for anything else', () => {
+    expect(parseBudget(makeState({ reserveModel: 'prepaid' })).values.reserveModel).toBe('prepaid')
+    expect(parseBudget(makeState({ reserveModel: 'evil' })).values.reserveModel).toBe('as-needed')
+  })
+})
+
+describe('parseBudget — family gifts', () => {
+  const gifts = (items, enabled = true) => ({ enabled, items })
+
+  it('parses enabled family gifts and their total', () => {
+    const p = parseBudget(makeState({}, [], gifts([{ id: 'p1', label: 'הורי הכלה', amount: '20,000' }, { id: 'p2', label: 'סבתא', amount: '5000' }])))
+    expect(p.values.familyGiftsEnabled).toBe(true)
+    expect(p.values.familyGifts).toEqual([{ id: 'p1', label: 'הורי הכלה', amount: 20_000 }, { id: 'p2', label: 'סבתא', amount: 5_000 }])
+    expect(p.familyTotal).toBe(25_000)
+    expect(p.isEmpty).toBe(false)
+  })
+
+  it('ignores disabled family gifts entirely — even invalid ones cannot block the summary', () => {
+    const p = parseBudget(makeState({}, [], gifts([{ id: 'p1', label: '', amount: 'oops' }], false)))
+    expect(p.errorCount).toBe(0)
+    expect(p.values.familyGifts).toEqual([])
+    expect(p.familyTotal).toBe(0)
+  })
+
+  it('requires a description only once a gift has an amount', () => {
+    expect(parseBudget(makeState({}, [], gifts([{ id: 'p1', label: '', amount: '' }]))).errorCount).toBe(0)
+    const p = parseBudget(makeState({}, [], gifts([{ id: 'p1', label: '  ', amount: '1000' }])))
+    expect(p.errors.family).toEqual({ p1: { label: MESSAGES.familyLabelRequired } })
+    expect(p.familyTotal).toBe(1_000) // a missing description does not hide the amount
+  })
+
+  it('validates amounts and description length', () => {
+    const p = parseBudget(makeState({}, [], gifts([
+      { id: 'a', label: 'x'.repeat(61), amount: '1' },
+      { id: 'b', label: 'דוד', amount: '1,5' },
+    ])))
+    expect(p.errors.family).toEqual({ a: { label: MESSAGES.familyLabelTooLong }, b: { amount: MESSAGES.notWhole } })
+    expect(p.familyTotal).toBeNull()
+    expect(p.errorCount).toBe(2)
+  })
+
 })
 
 describe('parseBudget — expenses', () => {
@@ -177,6 +240,15 @@ describe('parseBudget — isEmpty', () => {
 
   it('is NOT empty when a guaranteed minimum is billed with no guests', () => {
     expect(parseBudget(makeState({ mealPrice: '300', minimumMeals: '100' })).isEmpty).toBe(false)
+  })
+
+  it('is NOT empty when only reserve guests or family gifts are entered', () => {
+    expect(parseBudget(makeState({ reserveAvailable: '5', reserveGuests: '5' })).isEmpty).toBe(false)
+    expect(parseBudget(makeState({}, [], { enabled: true, items: [{ id: 'a', label: 'הורים', amount: '1000' }] })).isEmpty).toBe(false)
+  })
+
+  it('stays empty with family gifts switched on but no amounts yet', () => {
+    expect(parseBudget(makeState({}, [], { enabled: true, items: [{ id: 'a', label: 'הורים', amount: '' }] })).isEmpty).toBe(true)
   })
 
   it('is NOT empty when guests are entered', () => {

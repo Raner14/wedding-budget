@@ -2,7 +2,7 @@ import { describe, expect, it } from 'vitest'
 import { screen, within } from '@testing-library/react'
 import userEvent from '@testing-library/user-event'
 import { renderApp } from './test/renderApp.jsx'
-import { BUDGET_STORAGE_KEY } from './lib/budgetStorage.js'
+import { BUDGET_STORAGE_KEY, LEGACY_BUDGET_STORAGE_KEY } from './lib/budgetStorage.js'
 import { normalize, SAMPLES, seedBudget } from './test/helpers.js'
 
 const LABELS = {
@@ -10,8 +10,10 @@ const LABELS = {
   rate: 'אחוז הגעה צפוי (%)',
   mealPrice: 'מחיר למנה (₪)',
   minimum: 'מינימום מנות מובטח',
-  reserveMeals: 'מנות רזרבה לחיוב',
+  reservePlaces: 'מקומות רזרבה',
+  reserveGuests: 'כמה מהם צפויים להגיע',
   reservePrice: 'מחיר למנת רזרבה (₪)',
+  reserveGift: 'מתנה ממוצעת מאורח רזרבה (₪)',
   gift: 'מתנה ממוצעת לאורח מגיע (₪)',
 }
 
@@ -84,17 +86,18 @@ describe('Event details form', () => {
     expect(rate.value).toBe('90')
   })
 
-  it('keeps reserve meals collapsed by default and opens them when a reserve field is invalid', async () => {
+  it('keeps reserve guests collapsed by default and open while a reserve field is invalid', async () => {
     const user = userEvent.setup()
     renderApp()
-    const details = screen.getByText('מנות רזרבה').closest('details')
+    const details = screen.getByText('אורחי רזרבה').closest('details')
     expect(details.open).toBe(false)
-    await user.click(within(details).getByText('מנות רזרבה'))
+    await user.click(within(details).getByText('אורחי רזרבה'))
     expect(details.open).toBe(true)
-    await user.type(screen.getByLabelText(LABELS.reserveMeals), '10')
-    expect(screen.getByText('יש להזין מחיר למנת רזרבה')).toBeTruthy()
+    await user.type(screen.getByLabelText(LABELS.reservePlaces), '5')
+    await user.type(screen.getByLabelText(LABELS.reserveGuests), '8')
+    expect(screen.getByText('לא יותר ממספר מקומות הרזרבה (5)')).toBeTruthy()
     // Trying to collapse while there is an error keeps it open.
-    await user.click(within(details).getByText('מנות רזרבה'))
+    await user.click(within(details).getByText('אורחי רזרבה'))
     expect(details.open).toBe(true)
   })
 
@@ -103,26 +106,30 @@ describe('Event details form', () => {
     renderApp()
     await user.type(screen.getByLabelText(LABELS.invited), '300')
     await user.type(screen.getByLabelText(LABELS.gift), '450')
-    expect(stored()).toMatchObject({ version: 1, event: { invitedGuests: '300', averageGift: '450' } })
+    expect(stored()).toMatchObject({ version: 2, event: { invitedGuests: '300', averageGift: '450' } })
   })
 
   it('restores the saved form after a reload', async () => {
     const user = userEvent.setup()
     const first = renderApp()
     await user.type(screen.getByLabelText(LABELS.invited), '300')
-    await user.type(screen.getByLabelText(LABELS.reserveMeals), '10')
+    await user.type(screen.getByLabelText(LABELS.reservePlaces), '10')
+    await user.type(screen.getByLabelText(LABELS.reserveGuests), '4')
     await user.type(screen.getByLabelText(LABELS.reservePrice), '200')
+    await user.click(screen.getByRole('radio', { name: /רזרבה ששולמה מראש/ }))
     first.unmount()
 
     renderApp()
     expect(screen.getByLabelText(LABELS.invited).value).toBe('300')
     expect(screen.getByLabelText(LABELS.reservePrice).value).toBe('200')
-    expect(screen.getByText('מנות רזרבה').closest('details').open).toBe(true)
-    expect(attendingText()).toContain('255')
+    expect(screen.getByRole('radio', { name: /רזרבה ששולמה מראש/ }).checked).toBe(true)
+    expect(screen.getByText('אורחי רזרבה').closest('details').open).toBe(true)
+    expect(attendingText()).toContain('259') // 255 + 4 reserve guests
+    expect(attendingText()).toContain('כולל 4 מהרזרבה')
   })
 
   it('shows the error for invalid data that was saved earlier, instead of silently resetting it', () => {
-    localStorage.setItem(BUDGET_STORAGE_KEY, JSON.stringify({
+    localStorage.setItem(LEGACY_BUDGET_STORAGE_KEY, JSON.stringify({
       version: 1,
       event: { invitedGuests: '300', attendanceRate: '85', mealPrice: '35O' },
       expenses: [],

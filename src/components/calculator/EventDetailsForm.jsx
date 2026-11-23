@@ -1,25 +1,25 @@
-import { useState } from 'react'
 import Icon from '../Icon.jsx'
 import Reveal from '../Reveal.jsx'
 import { Heart, Rings } from '../Botanicals.jsx'
 import NumberField from './NumberField.jsx'
+import ReserveSection from './ReserveSection.jsx'
+import FamilyGifts from './FamilyGifts.jsx'
 import { formatNumber } from '../../lib/format.js'
 import './EventDetailsForm.css'
 
 /**
- * Step 1 — guests, venue & meals, gifts.
+ * Step 1 — guests, venue & meals (with optional reserve guests), gifts (with optional family gifts).
  *
  * @param {{
  *   event: Record<string, string>,
  *   errors: Record<string, string>,
- *   attendingGuests: number | null,
+ *   attending: { base: number, reserve: number } | null,
  *   onFieldChange: (field: string, value: string) => void,
- * }} props
+ *   reserve: { info: object | null, showMigrationNotice: boolean, onDismissNotice: () => void },
+ *   family: object,
+ * }} props   `family` holds the FamilyGifts props.
  */
-export default function EventDetailsForm({ event, errors, attendingGuests, onFieldChange }) {
-  const [reserveOpen, setReserveOpen] = useState(() => Boolean(event.reserveMeals || event.reserveMealPrice))
-  // Never hide a reserve field that has an error.
-  const forceReserveOpen = Boolean(errors.reserveMeals || errors.reserveMealPrice)
+export default function EventDetailsForm({ event, errors, attending, onFieldChange, reserve, family }) {
 
   const field = (name) => ({
     id: `field-${name}`,
@@ -53,7 +53,8 @@ export default function EventDetailsForm({ event, errors, attendingGuests, onFie
             <span className="computed-icon" aria-hidden="true"><Heart /></span>
             <span>
               צפויים לחגוג איתכם:{' '}
-              <strong>{attendingGuests === null ? '—' : `≈ ${formatNumber(attendingGuests)} אורחים`}</strong>
+              <strong>{attending === null ? '—' : `≈ ${formatNumber(attending.base + attending.reserve)} אורחים`}</strong>
+              {attending?.reserve > 0 && <span className="computed-note"> (כולל {formatNumber(attending.reserve)} מהרזרבה)</span>}
             </span>
           </p>
         </div>
@@ -70,31 +71,15 @@ export default function EventDetailsForm({ event, errors, attendingGuests, onFie
             placeholder="אין"
             help="אם האולם דורש מספר מנות מינימלי. אחרת השאירו ריק."
           />
-          <details
-            className="reserve"
-            open={reserveOpen || forceReserveOpen}
-            onToggle={(e) => setReserveOpen(e.currentTarget.open)}
-          >
-            <summary
-              onClick={(e) => {
-                // React would not re-open it (its `open` prop stays true), so block the collapse itself.
-                if (forceReserveOpen) e.preventDefault()
-              }}
-            >
-              <Icon name="chevron" className="chev" strokeWidth={2} />
-              מנות רזרבה <span className="opt">(אופציונלי)</span>
-            </summary>
-            <div className="reserve-body">
-              <p className="help help-top" id="reserve-help">
-                אם האולם גובה תשלום על מנות רזרבה, הזינו כמה מנות נוספות צפויות להיות מחויבות מעבר למנות הרגילות או
-                המובטחות. אם לא, השאירו ריק.
-              </p>
-              <div className="fields">
-                <NumberField {...field('reserveMeals')} label="מנות רזרבה לחיוב" unit="מנות" placeholder="0" helpId="reserve-help" />
-                <NumberField {...field('reserveMealPrice')} label="מחיר למנת רזרבה (₪)" unit="₪" placeholder="למשל 200" helpId="reserve-help" />
-              </div>
-            </div>
-          </details>
+          <ReserveSection
+            event={event}
+            errors={errors}
+            field={field}
+            onFieldChange={onFieldChange}
+            info={reserve.info}
+            showMigrationNotice={reserve.showMigrationNotice}
+            onDismissNotice={reserve.onDismissNotice}
+          />
         </div>
       </fieldset>
 
@@ -102,6 +87,7 @@ export default function EventDetailsForm({ event, errors, attendingGuests, onFie
         <legend><Icon name="gift" />המתנות</legend>
         <div className="fields">
           <NumberField {...field('averageGift')} label="מתנה ממוצעת לאורח מגיע (₪)" unit="₪" placeholder="למשל 450" help="ממוצע לאורח שמגיע, לא לזוג." />
+          <FamilyGifts {...family} />
         </div>
       </fieldset>
     </Reveal>

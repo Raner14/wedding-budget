@@ -1,4 +1,4 @@
-import { BUDGET_STORAGE_KEY } from '../lib/budgetStorage.js'
+import { BUDGET_STORAGE_KEY, LEGACY_BUDGET_STORAGE_KEY } from '../lib/budgetStorage.js'
 
 // Built from char codes so the source stays ASCII-only (no invisible characters).
 const BIDI_MARKS = new RegExp(`[${String.fromCharCode(0x200e, 0x200f, 0x061c)}]`, 'g')
@@ -26,7 +26,23 @@ export const SAMPLES = {
   zero: { event: { invitedGuests: '0', attendanceRate: '85', mealPrice: '350', minimumMeals: '250', averageGift: '450' }, expenses: SAMPLE_EXPENSES },
 }
 
-/** Writes a calculator state to localStorage before rendering. */
+/**
+ * Writes a budget exactly as the published version 1 site saved it (legacy key and
+ * format), so every test that seeds data also exercises the v1 → v2 migration.
+ */
 export function seedBudget({ event = {}, expenses = [] } = {}) {
-  localStorage.setItem(BUDGET_STORAGE_KEY, JSON.stringify({ version: 1, event: { ...EVENT_DEFAULTS, ...event }, expenses }))
+  localStorage.setItem(LEGACY_BUDGET_STORAGE_KEY, JSON.stringify({ version: 1, event: { ...EVENT_DEFAULTS, ...event }, expenses }))
+}
+
+const EVENT_DEFAULTS_V2 = {
+  invitedGuests: '', attendanceRate: '85', mealPrice: '', minimumMeals: '', averageGift: '',
+  reserveModel: 'as-needed', reserveAvailable: '', reserveGuests: '', reserveMealPrice: '', reserveGift: '',
+}
+
+/** Writes a budget in the current (version 2) format. */
+export function seedBudgetV2({ event = {}, expenses = [], familyGifts = { enabled: false, items: [] }, notices = { reserveMigrated: false } } = {}) {
+  localStorage.setItem(
+    BUDGET_STORAGE_KEY,
+    JSON.stringify({ version: 2, event: { ...EVENT_DEFAULTS_V2, ...event }, expenses, familyGifts, notices }),
+  )
 }

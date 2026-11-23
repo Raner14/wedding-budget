@@ -96,7 +96,7 @@ export default function WhatIfPanel({ values, disabledReason }) {
         <div>
           <p className="card-kicker">שלב 3</p>
           <h3 id="whatif-title" className="card-title">ומה אם...?</h3>
-          <p className="card-desc">הזיזו את הסליידרים כדי לבחון תרחישים. הנתונים שהזנתם לא ישתנו.</p>
+          <p className="card-desc">הזיזו את הסליידרים כדי לבחון תרחישים. הנתונים שהזנתם לא ישתנו. אורחי הרזרבה ומתנות המשפחה נשארים כפי שהזנתם.</p>
         </div>
       </div>
 
@@ -116,7 +116,7 @@ export default function WhatIfPanel({ values, disabledReason }) {
           output={pctText(mealPct)}
           valueText={pctVoice(mealPct, 'מחיר המנה')}
           scale={['−30%', '0', '+30%']}
-          hint={scenario && `מחיר מנה בתרחיש: ${formatMoney(scenario.values.mealPrice)}${scenario.values.reserveMeals > 0 ? ` · רזרבה: ${formatMoney(scenario.values.reserveMealPrice)}` : ''}`}
+          hint={scenario && `מחיר מנה בתרחיש: ${formatMoney(scenario.values.mealPrice)}${scenario.result.reserveMealsBilled > 0 && scenario.values.reserveMealPrice !== null ? ` · רזרבה: ${formatMoney(scenario.values.reserveMealPrice)}` : ''}`}
           disabled={!enabled}
           onChange={setMealPct}
         />
@@ -128,7 +128,7 @@ export default function WhatIfPanel({ values, disabledReason }) {
           output={`${rateOverride ?? baseRate}%`}
           valueText={`${rateOverride ?? baseRate} אחוזי הגעה`}
           scale={['50%', '75%', '100%']}
-          hint={scenario && `≈ ${formatNumber(scenario.result.attendingGuests)} אורחים מגיעים (מתוך ${formatNumber(values.invitedGuests)})`}
+          hint={scenario && `≈ ${formatNumber(scenario.result.baseGuests)} אורחים מגיעים (מתוך ${formatNumber(values.invitedGuests)})${scenario.result.reserveGuests > 0 ? ` + ${formatNumber(scenario.result.reserveGuests)} מהרזרבה` : ''}`}
           disabled={!enabled}
           onChange={setRateOverride}
         />
@@ -140,7 +140,7 @@ export default function WhatIfPanel({ values, disabledReason }) {
           output={pctText(giftPct)}
           valueText={pctVoice(giftPct, 'מתנה הממוצעת')}
           scale={['−30%', '0', '+30%']}
-          hint={scenario && `מתנה ממוצעת בתרחיש: ${formatMoney(scenario.values.averageGift)}`}
+          hint={scenario && `מתנה ממוצעת בתרחיש: ${formatMoney(scenario.values.averageGift)}${scenario.values.reserveGift !== null && scenario.result.reserveGuests > 0 ? ` · רזרבה: ${formatMoney(scenario.values.reserveGift)}` : ''}`}
           disabled={!enabled}
           onChange={setGiftPct}
         />
