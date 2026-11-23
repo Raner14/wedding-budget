@@ -2,9 +2,10 @@
 
 A Hebrew-first (RTL) wedding planning web app for couples in Israel:
 
-- **Budget calculator** (`/`) — guests and attendance, meal price with guaranteed minimum and
-  paid reserve meals, gifts, editable expenses with undo, a live summary (profit/loss,
-  break-even gift and meal price), an outdated-result state for invalid input, and what-if sliders.
+- **Budget calculator** (`/`) — guests and attendance, meal price with a guaranteed minimum,
+  optional **reserve guests** (two venue billing models), gifts with optional **family gifts**,
+  editable expenses with undo, a live summary (profit/loss, break-even gift and meal price),
+  an outdated-result state for invalid input, and what-if sliders.
 - **Wedding task planner** (`/tasks`) — a simple checklist with progress, inline editing,
   completion, delete with undo.
 
@@ -42,8 +43,24 @@ src/
   styles/       tokens.css, base.css, components.css
 ```
 
-Storage keys: `wedding-budget:v1` (calculator) and `wedding-budget:tasks:v1` (tasks).
+Storage keys: `wedding-budget:v2` (calculator) and `wedding-budget:tasks:v1` (tasks).
 Stored data is versioned and sanitized on load; corrupted data falls back to defaults.
+Calculator data saved by the first version (`wedding-budget:v1`) is migrated once on load and
+the legacy key is never written or deleted, so a rollback still finds the original data.
+
+## Calculation model (summary)
+
+- Base guests = round(invited × attendance %). Regular meals billed = max(base guests, guaranteed minimum).
+- **Reserve guests** come in addition to the base estimate (never more than the reserve places).
+  - *Pay as needed*: reserve guests first use guaranteed meals that are paid but unused; only the rest
+    is billed at the reserve meal price.
+  - *Prepaid*: every reserve place is billed once, used or not; reserve guests never trigger a second charge.
+  - Empty reserve meal price / reserve gift = same as the regular meal price / average gift.
+- **Family gifts** (when enabled) are fixed income on top of guest gifts — they must not also be part
+  of the average guest gift. Scenario sliders change neither reserve guests nor family gifts.
+- Break-even gift = the minimum whole-shekel *average gift* that breaks even; break-even meal price =
+  the maximum whole-shekel *regular* meal price that breaks even (reserve meals follow it unless overridden).
+- Old reserve meals (v1) are carried over as prepaid reserve with no reserve guests — identical results.
 
 ## Design reference
 
